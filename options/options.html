@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Obsidian Bookmarker · Settings</title>
+  <link rel="stylesheet" href="../popup/popup.css">
+  <link rel="stylesheet" href="options.css">
+</head>
+<body class="options">
+  <div class="wrap">
+    <h1><img src="../icons/icon48.png" alt="" width="32" height="32"> Obsidian Bookmarker</h1>
+
+    <div class="card">
+      <h2>1 · Connection</h2>
+      <div class="modes">
+        <label class="mode"><input type="radio" name="mode" value="rest">
+          <div><b>Local REST API</b> <span class="badge">recommended</span>
+          <p>Saves silently in the background, inserts under the right section, and lets you browse/search notes from Chrome. Needs the <a href="https://github.com/coddingtonbear/obsidian-local-rest-api" target="_blank">Local REST API</a> community plugin.</p></div>
+        </label>
+        <label class="mode"><input type="radio" name="mode" value="advanced-uri">
+          <div><b>Advanced URI</b>
+          <p>Inserts under the section via the <a href="https://github.com/Vinzent03/obsidian-advanced-uri" target="_blank">Advanced URI</a> plugin. Brings Obsidian to the front on each save.</p></div>
+        </label>
+        <label class="mode"><input type="radio" name="mode" value="uri">
+          <div><b>Built-in obsidian:// URI</b>
+          <p>No plugin needed. Appends to the end of the bookmarks note and pops Obsidian open.</p></div>
+        </label>
+      </div>
+
+      <div id="rest-fields">
+        <div class="grid">
+          <label class="field"><span>API URL</span><input id="apiUrl" placeholder="http://127.0.0.1:27123"></label>
+          <label class="field"><span>API key</span><input id="apiKey" type="password" placeholder="Paste from Obsidian → Settings → Local REST API" autocomplete="off"></label>
+        </div>
+        <p class="hint">Easiest: in the plugin's settings turn on <b>Enable Non-encrypted (HTTP) Server</b> and use <code>http://127.0.0.1:27123</code> (it only listens on your machine). To use the HTTPS port <code>27124</code>, first open <a href="https://127.0.0.1:27124" target="_blank">https://127.0.0.1:27124</a> and accept the self-signed certificate.</p>
+      </div>
+      <label class="field"><span>Vault name <i>(optional for REST, used to pop Obsidian open)</i></span><input id="vaultName" placeholder="My Vault"></label>
+      <div class="row"><button id="test">Test connection</button><span id="test-result" class="result-msg"></span></div>
+    </div>
+
+    <div class="card">
+      <h2>2 · Where things go</h2>
+      <div class="grid">
+        <label class="field"><span>Bookmarks note</span><input id="bookmarksFile"></label>
+        <label class="field"><span>Dedicated notes folder</span><input id="clippingsFolder"></label>
+        <label class="field"><span>Image attachments folder</span><input id="attachmentsFolder"></label>
+        <label class="field"><span>Tag prefix</span><input id="tagPrefix" placeholder="bookmark → #bookmark/dev"></label>
+      </div>
+      <div class="grid">
+        <label class="field"><span>Sections (one per line, emoji welcome)</span><textarea id="categories" rows="9"></textarea></label>
+        <label class="field"><span>Auto-sort rules <i>(domain = Section)</i></span><textarea id="domainRules" rows="9" spellcheck="false"></textarea></label>
+      </div>
+      <div class="grid">
+        <label class="field"><span>Default section</span><select id="defaultCategory"></select></label>
+        <label class="field"><span>Images section</span><select id="imageCategory"></select></label>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>3 · Entry format</h2>
+      <label class="field"><span>Template</span><input id="entryTemplate" spellcheck="false"></label>
+      <p class="hint">Placeholders: <code>{{checkbox}}</code> <code>{{link}}</code> <code>{{title}}</code> <code>{{url}}</code> <code>{{domain}}</code> <code>{{date}}</code> <code>{{time}}</code> <code>{{tags}}</code> <code>{{note}}</code> <code>{{category}}</code></p>
+      <pre id="tpl-preview" class="tpl-preview"></pre>
+      <div class="checks">
+        <label class="check"><input type="checkbox" id="addCategoryTag"> Add section tag (<code>#bookmark/dev</code>)</label>
+        <label class="check"><input type="checkbox" id="readLater"> “Read later” checkbox on by default</label>
+        <label class="check"><input type="checkbox" id="newestFirst"> Newest entries at top of section</label>
+        <label class="check"><input type="checkbox" id="linkDate"> Link dates to daily notes (<code>[[2026-10-09]]</code>)</label>
+        <label class="check"><input type="checkbox" id="downloadImages"> Download images into the vault (asks for site access)</label>
+        <label class="check"><input type="checkbox" id="closeAfterSave"> Close popup after saving</label>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Shortcuts</h2>
+      <p class="hint"><kbd>Alt+Shift+O</kbd> open popup · <kbd>Alt+Shift+B</kbd> quick-save without popup · <kbd>⌘/Ctrl+Enter</kbd> save from popup. Change them at <a id="shortcuts" href="#">chrome://extensions/shortcuts</a>. Right-click pages, links, images and selections for more.</p>
+    </div>
+
+    <div class="bar">
+      <button id="reset">Reset to defaults</button>
+      <span id="saved" class="result-msg"></span>
+      <button id="save-settings" class="primary">Save settings</button>
+    </div>
+  </div>
+  <script type="module" src="options.js"></script>
+</body>
+</html>

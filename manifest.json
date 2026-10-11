@@ -1,0 +1,55 @@
+{
+  "manifest_version": 3,
+  "name": "Obsidian Bookmarker",
+  "version": "1.0.0",
+  "description": "Save pages, links, images and highlights into an organized Obsidian bookmarks note — silently or with a popup — and browse your notes from Chrome.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "Save to Obsidian",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png"
+    }
+  },
+  "background": {
+    "service_worker": "src/background.js",
+    "type": "module"
+  },
+  "side_panel": {
+    "default_path": "popup/popup.html"
+  },
+  "options_page": "options/options.html",
+  "permissions": [
+    "storage",
+    "contextMenus",
+    "activeTab",
+    "tabs",
+    "scripting",
+    "notifications",
+    "sidePanel",
+    "favicon"
+  ],
+  "host_permissions": [
+    "http://127.0.0.1/*",
+    "https://127.0.0.1/*",
+    "http://localhost/*",
+    "https://localhost/*"
+  ],
+  "optional_host_permissions": ["<all_urls>"],
+  "commands": {
+    "_execute_action": {
+      "suggested_key": { "default": "Alt+Shift+O" },
+      "description": "Open the Save to Obsidian popup"
+    },
+    "quick-save": {
+      "suggested_key": { "default": "Alt+Shift+B" },
+      "description": "Quick-save current page to Obsidian (no popup)"
+    }
+  }
+}
