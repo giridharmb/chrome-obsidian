@@ -37,6 +37,14 @@ const SCENES = [
   { name: 'theme-solarized-dark', page: 'popup', q: 'scene=browse&theme=solarized-dark', size: [800, 600] },
   { name: 'theme-gruvbox', page: 'popup', q: 'scene=browse&theme=gruvbox', size: [800, 600] },
   { name: 'theme-rose-pine', page: 'popup', q: 'scene=browse&theme=rose-pine', size: [800, 600] },
+  { name: 'theme-tokyo-night', page: 'popup', q: 'scene=browse&theme=tokyo-night', size: [800, 600] },
+  { name: 'theme-catppuccin', page: 'popup', q: 'scene=browse&theme=catppuccin', size: [800, 600] },
+  { name: 'theme-synthwave', page: 'popup', q: 'scene=browse&theme=synthwave', size: [800, 600] },
+  { name: 'theme-matrix', page: 'popup', q: 'scene=browse&theme=matrix', size: [800, 600] },
+  { name: 'theme-cyberpunk', page: 'popup', q: 'scene=browse&theme=cyberpunk', size: [800, 600] },
+  { name: 'theme-sakura', page: 'popup', q: 'scene=browse&theme=sakura', size: [800, 600] },
+  { name: 'theme-forest', page: 'popup', q: 'scene=browse&theme=forest', size: [800, 600] },
+  { name: 'theme-coffee', page: 'popup', q: 'scene=browse&theme=coffee', size: [800, 600] },
   { name: 'options', page: 'options', q: '', size: [900, 1660] },
 ];
 

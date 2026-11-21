@@ -309,7 +309,7 @@ Click **▯** in the popup header (or right-click the toolbar icon → *Open Obs
 
 ### Themes
 
-Pick a theme from the dropdown in the popup's header (it applies and saves immediately), or in **Settings → Entry format → Theme**. The default follows your system's light/dark setting; you can also force **Light** or **Dark**, or choose one of six colour themes. The settings page previews the theme as soon as you select it.
+Pick a theme from the dropdown in the popup's header (it applies and saves immediately), or in **Settings → Entry format → Theme**. The default follows your system's light/dark setting; you can also force **Light** or **Dark**, or choose one of fourteen colour themes. The settings page previews the theme as soon as you select it.
 
 | Nord | Dracula | Solarized Light |
 |---|---|---|
@@ -318,6 +318,18 @@ Pick a theme from the dropdown in the popup's header (it applies and saves immed
 | Solarized Dark | Gruvbox | Rosé Pine |
 |---|---|---|
 | <img src="docs/images/theme-solarized-dark.png" width="260" alt="Solarized Dark"> | <img src="docs/images/theme-gruvbox.png" width="260" alt="Gruvbox"> | <img src="docs/images/theme-rose-pine.png" width="260" alt="Rosé Pine"> |
+
+| Tokyo Night | Catppuccin | Synthwave |
+|---|---|---|
+| <img src="docs/images/theme-tokyo-night.png" width="260" alt="Tokyo Night"> | <img src="docs/images/theme-catppuccin.png" width="260" alt="Catppuccin"> | <img src="docs/images/theme-synthwave.png" width="260" alt="Synthwave"> |
+
+| Matrix | Cyberpunk | Sakura |
+|---|---|---|
+| <img src="docs/images/theme-matrix.png" width="260" alt="Matrix"> | <img src="docs/images/theme-cyberpunk.png" width="260" alt="Cyberpunk"> | <img src="docs/images/theme-sakura.png" width="260" alt="Sakura"> |
+
+| Forest | Coffee |
+|---|---|
+| <img src="docs/images/theme-forest.png" width="260" alt="Forest"> | <img src="docs/images/theme-coffee.png" width="260" alt="Coffee"> |
 
 ### Keyboard shortcuts
 
@@ -364,7 +376,7 @@ Type `ob` in the address bar, press **Tab** (or Space), then type words from a t
 | Newest first | on | Insert at the top of the section instead of the bottom |
 | Link dates to daily notes | off | Writes `[[2026-10-09]]` instead of `2026-10-09` |
 | Download images into the vault | off | Asks Chrome for site access when enabled; falls back to remote URL if a download fails |
-| Theme | Default (system) | Light, Dark, Nord, Dracula, Solarized Light, Solarized Dark, Gruvbox, Rosé Pine |
+| Theme | Default (system) | Light, Dark, Nord, Dracula, Solarized Light, Solarized Dark, Gruvbox, Rosé Pine, Tokyo Night, Catppuccin, Synthwave, Matrix, Cyberpunk, Sakura, Forest, Coffee |
 | Close popup after saving | on | |
 | Also log each save in today's daily note | off | REST mode. Appends the entry to the end of today's daily note; needs Obsidian's *Daily notes* core plugin (or Periodic Notes). |
 | One note per section | off | REST mode. New saves go to `<bookmarks folder>/<Section>.md`. The Bookmarks tab, duplicate check and ★ badge read every note in that folder, so entries already in the hub note still show. |
