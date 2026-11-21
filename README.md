@@ -250,6 +250,8 @@ Press `Alt+Shift+O` or click the toolbar icon.
 - **Note** — a one-liner appended after `—`. Type `[[` and a few letters to link a note from your vault; press **Tab** or click a suggestion.
 - **Include highlighted text** — appears when you had text selected on the page.
 - **Read later** — adds the `- [ ]` checkbox.
+- **Remind me** — tomorrow, in 3 days, a week or a month. Chrome shows a notification then; click it to open the link. Reminders live in the extension, not in your note, and need Chrome to be running.
+- **Always save *site* to *section*** — appears under the section chips when you pick a section different from the automatic one. One click adds an auto-sort rule for that site.
 - **Create its own note** — also writes a dedicated note in the clippings folder.
 - **Markdown preview** — shows exactly what will be written and where.
 - **Save** (`⌘/Ctrl + Enter`) or **Save & open in Obsidian** (`⌘/Ctrl + Shift + Enter`).
@@ -293,11 +295,14 @@ Header buttons: **▯** open side panel · **↗** open the bookmarks note in Ob
 - Click a tag chip at the top, or a tag on any entry, to filter by it. Click again to clear it.
 - **Drag** a bookmark onto another section (its header or its list) to move it there. Its section tag is updated and any highlight quote moves with it.
 - Hover an entry and click **Edit** to change its title, section, tags or note in the Save tab, then **Update** (or **Cancel**).
-- **Views:** the first dropdown switches between All, Read later, Done, **Recent (last 20)**, **On this site** and **Broken links**.
+- **Views:** the first dropdown switches between All, Read later, Done, **Recent (last 20)**, **On this site**, **Pinned** and **Broken links**.
+- **Pin:** click ☆ on a row (or press `p`) to keep it at the top of its section; the **Pinned** view lists them all. Pinning adds a `#pinned` tag to the entry in your note.
+- **Stats:** a line above the list shows totals, how many are still to read, how many you saved this week, and your top sections and tags.
+- **Export:** download the current view as a bookmarks file any browser can import, or as a spreadsheet (.csv).
 - **Sort:** the second dropdown orders each section by note order, newest, oldest, title or domain.
 - **Bulk actions:** click **Select** (or ⌘/Ctrl-click rows, or press `x`), then move, tag, mark read or delete everything selected. **Select all shown** picks the whole current view.
 - **Check links** tests the links in the current view (up to 200 at a time) and lists the ones that return 404/410 or don't answer. It asks for site access the first time, because checking a link means requesting it.
-- **Keyboard:** `/` filter · `↑` `↓` move · `Enter` open · `e` edit · `x` select · `Delete` remove.
+- **Keyboard:** `/` filter · `↑` `↓` move · `Enter` open · `e` edit · `x` select · `p` pin · `Delete` remove.
 - The list refreshes by itself every 15 seconds while open, so edits made in Obsidian show up without reopening.
 - Tick the checkbox to mark as read — it updates `- [ ]` → `- [x]` in Obsidian.
 - Click a title to open the page. Entries with a dedicated note show **Note** (open in Obsidian) and **View** (preview here) on hover.
@@ -360,6 +365,8 @@ Type `ob` in the address bar, press **Tab** (or Space), then type words from a t
 ### Undo, delete and offline saves
 
 - After saving from the popup, the toast shows **Undo** for a moment.
+- Deleting a bookmark and every bulk action (move, tag, mark read, delete) also offer **Undo** for a few seconds. Undo puts the bookmark notes back exactly as they were.
+- Before each bulk action and each Chrome import, a dated copy of your bookmark notes is saved to `Bookmarks/Backups/` as a `.md.bak` file. Obsidian ignores that file type, so the copies don't show up in search, tags or task lists. To use one, rename it to `.md`. They are never deleted automatically.
 - In the **Bookmarks** tab, hover an entry and click **✕** to delete it. Only the list entry is removed; a dedicated note or downloaded image stays in the vault.
 - If Obsidian isn't running, the save is queued (the icon shows **…**) and written within a minute of Obsidian coming back. Quick-saves, right-click saves and popup saves are all queued; *Save all tabs* is not.
 

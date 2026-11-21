@@ -52,3 +52,18 @@ assert.ok(vault.get(F).includes('- [New](https://new.com/) #bookmark/dev · new.
 assert.ok(vault.get(F).includes('### Recipes\n\n- [Rec](https://rec.com) #bookmark/recipes'));
 assert.equal(vault.get(F).split('a.com').length, start.split('a.com').length);
 console.log('import OK');
+assert.ok([...vault.keys()].some((k) => /^Bookmarks\/Backups\/Bookmarks \d{4}-\d{2}-\d{2} \d{4}\.md\.bak$/.test(k)), 'import keeps a backup');
+
+// Undo: snapshot, delete two, restore.
+vault.clear();
+vault.set(F, start);
+await core.snapshot(s);
+await core.removeBookmark(s, 'https://a.com');
+await core.removeBookmark(s, 'https://c.com');
+assert.ok(!vault.get(F).includes('a.com'));
+await core.restore(s);
+assert.equal(vault.get(F), start);
+await assert.rejects(async () => core.restore(s)); // one undo per snapshot
+await core.pin(s, 'https://b.com');
+assert.ok(vault.get(F).includes('- [B](https://b.com) #pinned #bookmark/inbox'));
+console.log('undo / pin OK');

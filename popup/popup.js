@@ -5,6 +5,8 @@ import {
   categorize,
   cleanUrl,
   normTag,
+  toCsv,
+  toNetscape,
   renderEntry,
   parseTagInput,
   safeFileName,
@@ -45,7 +47,7 @@ function toast(msg, err = false, action) {
   t.style.pointerEvents = action ? 'auto' : '';
   t.className = `show${err ? ' err' : ''}`;
   clearTimeout(toast.h);
-  toast.h = setTimeout(() => (t.className = ''), err ? 4000 : 1800);
+  toast.h = setTimeout(() => (t.className = ''), action ? 7000 : err ? 4000 : 1800);
 }
 
 const favicon = (url) => {
@@ -170,6 +172,19 @@ function bookmarkTagCounts() {
 }
 
 // The chips double as autocomplete: they narrow to the word being typed, and Tab accepts the first one.
+// "Always save <site> here": adds a rule at the top of the auto-sort list, so it wins.
+function renderSiteRule() {
+  const site = domainOf(page.url || '');
+  const b = $('site-rule');
+  b.hidden = !site || editing || !category || norm(categorize(page.url, S)) === norm(category);
+  b.textContent = `Always save ${site} to ${category}`;
+  b.onclick = async () => {
+    S = await saveSettings({ domainRules: `${site} = ${category}\n${S.domainRules}` });
+    toast(`Rule added: ${site} → ${category}`);
+    renderSiteRule();
+  };
+}
+
 function renderTagSuggestions() {
   const input = $('tags');
   const partial = /\S$/.test(input.value) ? input.value.split(/[\s,]+/).pop().replace(/^#/, '').toLowerCase() : '';
@@ -235,10 +250,18 @@ function currentItem(open = false) {
 
 function updatePreview() {
   if (!S || !page.url) return;
+  renderSiteRule();
   const it = currentItem();
   const clipPath = it.dedicatedNote && S.mode === 'rest' ? `${S.clippingsFolder}/${safeFileName(it.title)}.md` : null;
   $('preview').textContent = renderEntry(S, { ...it, clipPath });
   $('target').textContent = `${S.bookmarksFile} › ${category}`;
+}
+
+function setReminder(item) {
+  const days = +$('remind').value;
+  if (!days) return;
+  $('remind').value = '';
+  send('remind', { url: item.url, title: item.title, days }).catch((e) => toast(e.message, true));
 }
 
 async function doSave(open) {
@@ -250,13 +273,16 @@ async function doSave(open) {
       const e = editing;
       const item = { ...currentItem(), date: e.date, done: e.done, notePath: e.notePath };
       await send('update', { url: e.url, file: e.file, section: e.section, item });
+      setReminder(item);
       toast('Updated');
       await stopEdit();
       loadBookmarks();
       document.querySelector('.tabs [data-tab="browse"]').click();
       return;
     }
-    const r = await send('save', { item: currentItem(open) });
+    const saved = currentItem(open);
+    const r = await send('save', { item: saved });
+    setReminder(saved);
     if (r.queued) toast("Obsidian isn't running — queued, will save when it's back");
     else {
       toast(`Saved to ${r.category}`, false, {
@@ -385,6 +411,22 @@ function toggleFilter(word) {
 const limits = new Map(); // section → how many entries are shown
 const opened = new Set(); // sections unfolded by hand in a large collection
 
+function renderStats() {
+  const all = data.entries;
+  if (!all.length) return $('stats').replaceChildren();
+  const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
+  const top = (pairs) => [...pairs].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, n]) => `${k} ${n}`).join(', ');
+  const sections = new Map();
+  for (const e of all) sections.set(e.section, (sections.get(e.section) || 0) + 1);
+  const b = (n) => el('b', { textContent: n });
+  $('stats').replaceChildren(
+    b(all.length), ' bookmarks · ',
+    b(all.filter((e) => e.done === false).length), ' to read · ',
+    b(all.filter((e) => e.date >= weekAgo).length), ' saved this week · top sections: ', top(sections),
+    bookmarkTagCounts().size ? ` · top tags: ${top(bookmarkTagCounts())}` : ''
+  );
+}
+
 function renderTagCloud(words) {
   const top = [...bookmarkTagCounts().entries()].sort((a, b) => b[1] - a[1]).slice(0, 14);
   $('tag-cloud').replaceChildren(
@@ -398,6 +440,7 @@ function renderList() {
   const words = $('filter').value.toLowerCase().split(/\s+/).filter(Boolean);
   const f = words.length;
   renderTagCloud(words);
+  renderStats();
   const show = $('show').value;
   const list = $('list');
   const site = domainOf(page.url || '');
@@ -406,6 +449,7 @@ function renderList() {
     if (show === 'done' && e.done !== true) return false;
     if (show === 'site' && domainOf(e.url) !== site) return false;
     if (show === 'broken' && !broken.has(e.url)) return false;
+    if (show === 'pinned' && !e.pinned) return false;
     if (!f) return true;
     const hay = [e.title, e.url, e.section, e.note, ...e.tags].join(' ').toLowerCase();
     return words.every((w) => hay.includes(w));
@@ -422,7 +466,10 @@ function renderList() {
   if (!f && show === 'all') [...S.categories, ...data.sections].forEach(group);
   for (const e of items) group(show === 'recent' ? 'Recent' : e.section || 'Unsorted')[1].push(e);
   const order = SORTS[$('sort').value];
-  if (order) for (const g of groups.values()) g[1].sort(order);
+  for (const g of groups.values()) {
+    if (order) g[1].sort(order);
+    g[1].sort((a, b) => b.pinned - a.pinned); // pinned first; the sort is stable, so the rest keep their order
+  }
   const out = [];
   // Large collections: sections start folded, and each shows 50 entries at a time, so the popup stays fast.
   const big = data.entries.length > 200 && !f && show === 'all';
@@ -500,12 +547,48 @@ async function bulk(label, fn) {
   const items = [...selected];
   if (!items.length) return toast('Select some bookmarks first', true);
   let failed = 0;
+  try {
+    await send('snapshot', { backup: true }); // for Undo, plus a dated copy in Bookmarks/Backups
+  } catch (e) {
+    return toast(e.message, true);
+  }
   toast(`${label}: working on ${items.length}…`);
   for (const e of items) await Promise.resolve(fn(e)).catch(() => failed++); // one at a time: each rewrites the note
   selected.clear();
   await loadBookmarks();
-  toast(failed ? `${label}: ${failed} of ${items.length} failed` : `${label}: ${items.length} done`, !!failed);
+  toast(failed ? `${label}: ${failed} of ${items.length} failed` : `${label}: ${items.length} done`, !!failed, UNDO);
 }
+
+const UNDO = {
+  label: 'Undo',
+  fn: () => send('restore').then(() => (toast('Restored'), loadBookmarks()), (e) => toast(e.message, true)),
+};
+
+async function removeOne(e) {
+  if (!confirm(`Delete "${e.title}" from your bookmarks?`)) return;
+  try {
+    await send('snapshot');
+    await send('remove', { url: e.url, file: e.file });
+    await loadBookmarks();
+    toast('Deleted', false, UNDO);
+  } catch (err) {
+    toast(err.message, true);
+  }
+}
+
+$('export').onchange = (ev) => {
+  const kind = ev.target.value;
+  ev.target.value = '';
+  if (!kind || !shown.length) return;
+  const text = kind === 'csv' ? toCsv(shown) : toNetscape(shown);
+  const a = el('a', {
+    href: URL.createObjectURL(new Blob([text], { type: kind === 'csv' ? 'text/csv' : 'text/html' })),
+    download: `obsidian-bookmarks.${kind}`,
+  });
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast(`Exported ${shown.length} bookmarks`);
+};
 
 /** The edit-form shape of an existing entry, optionally with one more tag. */
 const asItem = (e, tag) => ({
@@ -599,9 +682,8 @@ document.addEventListener('keydown', (ev) => {
   if (ev.key === 'Enter') openTab(e.url);
   else if (ev.key === 'e') e.image || startEdit(e);
   else if (ev.key === 'x' || ev.key === ' ') ev.preventDefault(), toggleSel(e);
-  else if (ev.key === 'Delete' || ev.key === 'Backspace') {
-    confirm(`Delete "${e.title}" from your bookmarks?`) && send('remove', { url: e.url, file: e.file }).then(loadBookmarks, (err) => toast(err.message, true));
-  }
+  else if (ev.key === 'p') send('pin', { url: e.url, file: e.file }).then(() => loadBookmarks(), (err) => toast(err.message, true));
+  else if (ev.key === 'Delete' || ev.key === 'Backspace') removeOne(e);
 });
 
 let dragged = null; // bookmark being dragged between sections
@@ -670,10 +752,12 @@ function renderItem(e) {
     // Not for image entries: rewriting their line would drop the embedded picture.
     e.image ? null : el('button', { textContent: 'Edit', title: 'Edit title, section, tags and note', onclick: () => startEdit(e) }),
     el('button', {
-      textContent: '✕',
-      title: 'Delete this bookmark',
-      onclick: () => confirm(`Delete "${e.title}" from your bookmarks?`) && send('remove', { url: e.url, file: e.file }).then(loadBookmarks, (err) => toast(err.message, true)),
-    })
+      textContent: e.pinned ? '★' : '☆',
+      className: e.pinned ? 'on' : '',
+      title: e.pinned ? 'Unpin' : 'Pin to the top of its section',
+      onclick: () => send('pin', { url: e.url, file: e.file }).then(() => loadBookmarks(), (err) => toast(err.message, true)),
+    }),
+    el('button', { textContent: '✕', title: 'Delete this bookmark', onclick: () => removeOne(e) })
   );
   const row = el(
     'div',
@@ -689,7 +773,7 @@ function renderItem(e) {
       ondragend: () => (dragged = null),
     },
     box || el('img', { className: 'fav', src: favicon(e.url), alt: '', loading: 'lazy' }),
-    el('div', { className: 'body' }, el('a', { className: 't', textContent: e.title || e.url, title: e.url, onclick: () => openTab(e.url) }), meta),
+    el('div', { className: 'body' }, el('a', { className: 't', title: e.url, onclick: () => openTab(e.url) }, e.pinned ? el('span', { className: 'pin', textContent: '★' }) : null, e.title || e.url), meta),
     tools
   );
   // While selecting, a click anywhere on the row selects it instead of opening, ticking or editing.

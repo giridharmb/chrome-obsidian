@@ -68,3 +68,15 @@ console.log('ALL OK');
   assert.equal(p[1].notePath, 'Clips/C');
   console.log('wikilink-in-note OK');
 }
+{
+  const d = '### Dev\n- [A](https://a.com) #bookmark/dev · a.com\n';
+  const pinned = m.togglePin(d, 'https://a.com');
+  assert.equal(pinned, '### Dev\n- [A](https://a.com) #pinned #bookmark/dev · a.com\n');
+  assert.equal(m.parseBookmarks(pinned).entries[0].pinned, true);
+  assert.equal(m.togglePin(pinned, 'https://a.com'), d);
+  const es = m.parseBookmarks('### Dev\n- [ ] [=SUM("x")](https://a.com/?q=1&r=2) #t · a.com · 2026-01-02 — n, "q"\n').entries;
+  assert.equal(m.toCsv(es).split('\r\n')[1], `"'=SUM(""x"")","https://a.com/?q=1&r=2","Dev","#t","2026-01-02","unread","n, ""q"""`);
+  const html = m.toNetscape(es);
+  assert.ok(html.includes('<DT><H3>Dev</H3>') && html.includes('HREF="https://a.com/?q=1&amp;r=2"') && html.includes('TAGS="t"'));
+  console.log('pin / export OK');
+}

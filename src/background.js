@@ -39,7 +39,28 @@ chrome.runtime.onStartup.addListener(buildMenus);
 
 // Retry bookmarks that were saved while Obsidian was closed.
 chrome.alarms.create('flush', { periodInMinutes: 1 });
-chrome.alarms.onAlarm.addListener(async () => core.flushQueue(await getSettings()).catch(() => {}));
+chrome.alarms.onAlarm.addListener(async () => {
+  core.flushQueue(await getSettings()).catch(() => {});
+  // Reminders ride on the same once-a-minute alarm.
+  const { reminders = [] } = await chrome.storage.local.get('reminders');
+  const due = reminders.filter((r) => r.at <= Date.now());
+  if (!due.length) return;
+  await chrome.storage.local.set({ reminders: reminders.filter((r) => r.at > Date.now()) });
+  for (const r of due) {
+    chrome.notifications.create(`remind:${r.url}`, {
+      type: 'basic',
+      iconUrl: chrome.runtime.getURL('icons/icon128.png'),
+      title: 'Time to read this',
+      message: r.title || r.url,
+      requireInteraction: true,
+    });
+  }
+});
+chrome.notifications.onClicked.addListener((id) => {
+  if (!id.startsWith('remind:')) return;
+  chrome.tabs.create({ url: id.slice(7) });
+  chrome.notifications.clear(id);
+});
 chrome.storage.onChanged.addListener((changes) => {
   if (changes.settings) buildMenus();
 });
@@ -149,6 +170,14 @@ const handlers = {
   tags: (s) => core.client(s).tags().catch(() => []), // older plugins: fall back to bookmark tags only
   move: (s, m) => core.moveBookmark(s, m),
   update: (s, m) => core.updateBookmark(s, m).finally(markActive),
+  snapshot: (s, m) => core.snapshot(s, m),
+  restore: (s) => core.restore(s).finally(markActive),
+  pin: (s, m) => core.pin(s, m.url, m.file),
+  remind: async (s, m) => {
+    const { reminders = [] } = await chrome.storage.local.get('reminders');
+    const rest = reminders.filter((r) => r.url !== m.url); // one reminder per link
+    await chrome.storage.local.set({ reminders: [...rest, { url: m.url, title: m.title, at: Date.now() + m.days * 86400000 }] });
+  },
   importBookmarks: (s, m) => core.importBookmarks(s, m.items),
   checkLinks: (s, m) => core.checkLinks(m.urls),
   toggleRead: (s, m) => core.toggleRead(s, m.url, m.file),

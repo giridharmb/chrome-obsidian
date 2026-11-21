@@ -315,6 +315,7 @@ export function parseBookmarks(content) {
       date: (/(\d{4}-\d{2}-\d{2})/.exec(rest) || [])[1] || '',
       notePath: wiki && !isImage ? wiki[1] : null,
       image: isImage,
+      pinned: tags.includes('#pinned'),
       line: i,
     });
   });
@@ -341,10 +342,50 @@ export function toggleEntry(content, url) {
 export const removeEntry = (content, url) => takeEntry(content, url)?.content ?? null;
 
 /** Cuts that entry out: { content: note without it, block: its lines, index: line it started on }. */
+const findEntry = (lines, url) => {
+  const target = canonUrl(url);
+  return lines.findIndex((l) => /^[-*+]\s/.test(l) && [...l.matchAll(/\]\(([^)\s]+)\)/g)].some((x) => canonUrl(x[1]) === target));
+};
+
+/** Adds or removes the #pinned tag on the first entry with this URL. Null if not found. */
+export function togglePin(content, url) {
+  const lines = content.split('\n');
+  const i = findEntry(lines, url);
+  if (i === -1) return null;
+  lines[i] = /\s#pinned(?=\s|$)/.test(lines[i]) ? lines[i].replace(/\s#pinned(?=\s|$)/, '') : lines[i].replace(/\]\([^)\s]+\)/, (m) => `${m} #pinned`);
+  return lines.join('\n');
+}
+
+const csvCell = (v) => {
+  let t = String(v ?? '');
+  if (/^[=+\-@]/.test(t)) t = `'${t}`; // stop spreadsheets treating a title as a formula
+  return `"${t.replace(/"/g, '""')}"`;
+};
+
+export function toCsv(entries) {
+  const rows = entries.map((e) => [e.title, e.url, e.section, e.tags.join(' '), e.date, e.done === null ? '' : e.done ? 'read' : 'unread', e.note]);
+  return [['Title', 'URL', 'Section', 'Tags', 'Date', 'Status', 'Note'], ...rows].map((r) => r.map(csvCell).join(',')).join('\r\n');
+}
+
+/** The bookmarks-file format every browser can import; sections become folders. */
+export function toNetscape(entries) {
+  const bySection = new Map();
+  for (const e of entries) bySection.set(e.section || 'Unsorted', [...(bySection.get(e.section || 'Unsorted') || []), e]);
+  const out = ['<!DOCTYPE NETSCAPE-Bookmark-file-1>', '<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">', '<TITLE>Bookmarks</TITLE>', '<H1>Bookmarks</H1>', '<DL><p>'];
+  for (const [section, list] of bySection) {
+    out.push(`  <DT><H3>${esc(section)}</H3>`, '  <DL><p>');
+    for (const e of list) {
+      const added = e.date ? ` ADD_DATE="${Math.floor(new Date(e.date).getTime() / 1000)}"` : '';
+      out.push(`    <DT><A HREF="${esc(e.url)}"${added} TAGS="${esc(e.tags.map((t) => t.slice(1)).join(','))}">${esc(e.title)}</A>`);
+    }
+    out.push('  </DL><p>');
+  }
+  return [...out, '</DL><p>'].join('\n');
+}
+
 export function takeEntry(content, url) {
   const lines = content.split('\n');
-  const target = canonUrl(url);
-  const i = lines.findIndex((l) => /^[-*+]\s/.test(l) && [...l.matchAll(/\]\(([^)\s]+)\)/g)].some((x) => canonUrl(x[1]) === target));
+  const i = findEntry(lines, url);
   if (i === -1) return null;
   let n = 1;
   while (i + n < lines.length && /^\s+\S/.test(lines[i + n])) n++;

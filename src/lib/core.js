@@ -14,6 +14,7 @@ import {
   toggleEntry,
   removeEntry,
   takeEntry,
+  togglePin,
   categoryTag,
   norm,
   shrinkSections,
@@ -217,12 +218,53 @@ export async function saveTabs(s, tabs) {
   return { count: pages.length, category: section };
 }
 
+/** Every note that holds bookmarks: the hub note, plus the per-section notes when that setting is on. */
+const bookmarkFiles = async (s) =>
+  s.splitBySection ? [...new Set([s.bookmarksFile, ...(await client(s).list(dirOf(s.bookmarksFile)))])] : [s.bookmarksFile];
+
+let undo = null; // { path: content } as the notes were before the last delete / bulk action
+
+/** Remembers the bookmark notes as they are now, for Undo. With `backup`, also keeps dated copies in the vault. */
+export async function snapshot(s, { backup = false } = {}) {
+  requireRest(s);
+  const c = client(s);
+  const snap = {};
+  for (const f of await bookmarkFiles(s)) snap[f] = await c.read(f);
+  undo = snap;
+  if (!backup) return;
+  // ".bak" keeps the copies out of Obsidian's search, tags and task lists.
+  const stamp = `${fmtDate()} ${fmtTime().replace(':', '')}`;
+  for (const [f, content] of Object.entries(snap)) {
+    if (content != null) await c.write(`${dirOf(s.bookmarksFile)}/Backups/${f.split('/').pop().replace(/\.md$/, '')} ${stamp}.md.bak`, content);
+  }
+}
+
+/**
+ * Puts the notes back as they were at the last snapshot.
+ * shortcut: a note created since the snapshot (first move into a brand-new section, with one note per section on)
+ * is left alone rather than deleted, so that undo can leave a duplicate there; delete it by hand if it happens.
+ */
+export function restore(s) {
+  requireRest(s);
+  if (!undo) throw new ObsidianError('Nothing to undo.', 0);
+  const snap = undo;
+  undo = null;
+  const c = client(s);
+  return serialize(async () => {
+    for (const [f, content] of Object.entries(snap)) if (content != null) await c.write(f, content);
+    cache.at = 0;
+  });
+}
+
+export async function pin(s, url, file) {
+  if (!(await editNote(s, file || s.bookmarksFile, (cur) => cur && togglePin(cur, url)))) throw new ObsidianError('Bookmark not found in the note.', 0);
+}
+
 export async function getBookmarks(s) {
   requireRest(s);
   const c = client(s);
-  const files = s.splitBySection ? [...new Set([s.bookmarksFile, ...(await c.list(dirOf(s.bookmarksFile)))])] : [s.bookmarksFile];
   const out = { entries: [], sections: [] };
-  for (const file of files) {
+  for (const file of await bookmarkFiles(s)) {
     const content = await c.read(file);
     if (!content) continue;
     const p = parseBookmarks(content);
@@ -309,6 +351,7 @@ export function updateBookmark(s, { url, file, section, item }) {
 
 /** Adds many bookmarks at once (Chrome import): one write per section; links already saved are skipped. */
 export async function importBookmarks(s, items) {
+  await snapshot(s, { backup: true });
   const have = new Set((await getBookmarks(s)).entries.map((e) => canonUrl(e.url)));
   const bySection = new Map();
   let added = 0;

@@ -69,6 +69,7 @@
       <div class="field">
         <span>Section</span>
         <div id="cats" class="chips"></div>
+        <button id="site-rule" class="small" hidden></button>
       </div>
 
       <label class="field">
@@ -91,6 +92,15 @@
       <div class="toggles">
         <label class="check" title="Adds a - [ ] checkbox so you can tick it off later"><input type="checkbox" id="readlater"> Read later</label>
         <label class="check" title="Also creates a dedicated note with metadata, highlights and notes"><input type="checkbox" id="dedicated"> Create its own note</label>
+        <label class="check" title="Shows a Chrome notification when it's time">Remind me
+          <select id="remind">
+            <option value="">never</option>
+            <option value="1">tomorrow</option>
+            <option value="3">in 3 days</option>
+            <option value="7">in a week</option>
+            <option value="30">in a month</option>
+          </select>
+        </label>
       </div>
 
       <details class="preview">
@@ -114,6 +124,7 @@
           <option value="done">Done</option>
           <option value="recent">Recent (last 20)</option>
           <option value="site">On this site</option>
+          <option value="pinned">Pinned</option>
           <option value="broken">Broken links</option>
         </select>
         <select id="sort" title="Order within each section">
@@ -125,6 +136,11 @@
         </select>
         <button id="select-mode" title="Select several bookmarks (or ⌘/Ctrl-click, or press x)">Select</button>
         <button id="check" title="Find links in this view that no longer load">Check links</button>
+        <select id="export" title="Download the bookmarks in this view">
+          <option value="">Export…</option>
+          <option value="html">Bookmarks file (.html)</option>
+          <option value="csv">Spreadsheet (.csv)</option>
+        </select>
       </div>
       <div id="bulk" class="bulk" hidden>
         <b id="bulk-n"></b>
@@ -135,6 +151,7 @@
         <button id="bulk-all" class="small">Select all shown</button>
         <button id="bulk-clear" class="small">Done</button>
       </div>
+      <div id="stats" class="stats"></div>
       <div id="tag-cloud" class="chips small"></div>
       <div id="list" class="list"></div>
     </section>

@@ -147,7 +147,7 @@ blockquote {
   cursor: pointer; user-select: none;
 }
 .group-h.collapsed + .group { display: none; }
-.item { display: flex; gap: 8px; align-items: flex-start; padding: 6px 4px; border-radius: 6px; }
+.item { display: flex; gap: 8px; align-items: flex-start; padding: 8px 6px; margin: 4px 0; border-radius: 6px; }
 .item:hover { background: var(--bg-2); }
 .item img.fav { width: 16px; height: 16px; margin-top: 2px; flex: none; }
 .item .body { flex: 1; min-width: 0; }
@@ -213,6 +213,8 @@ blockquote {
 .item.current { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
 .more { align-self: flex-start; margin: 4px 0 4px 28px; }
 .row > select, .row > button { flex: none; }
+.row > select { max-width: 124px; }
+.row > input { min-width: 180px; }
 .bulk { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; background: var(--accent-soft); border-radius: var(--radius); padding: 6px 8px; }
 .bulk select, .bulk input { width: auto; padding: 4px 8px; font-size: 12px; }
 .bulk input { width: 130px; }
@@ -220,6 +222,12 @@ blockquote {
 .item.focused { outline: 2px solid var(--accent); outline-offset: -2px; }
 .item .bad { color: var(--err); font-weight: 600; }
 #select-mode.on { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+.stats { font-size: 12px; color: var(--fg-3); }
+.stats b { color: var(--fg-2); font-weight: 600; }
+#site-rule { align-self: flex-start; color: var(--fg-2); }
+.check select { width: auto; padding: 2px 6px; font-size: 12px; }
+.item .pin { color: var(--accent); margin-right: 4px; }
+.item .tools .on { color: var(--accent); }
 #toast a { color: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; }
 #toast.err { background: var(--err); color: #fff; }
 
