@@ -331,7 +331,8 @@ Click **▯** in the popup header (or right-click the toolbar icon → *Open Obs
 - **When a reminder comes due** you get a Chrome notification. Click it to open the link, or use **Later today** (3 hours) or **Tomorrow 9:00** to snooze. Snoozing a repeating reminder doesn't cancel the repeat. On macOS the snooze buttons are under the notification's *Options* menu.
 - **You can't miss one:** the toolbar icon also shows a red count of due reminders, and the popup lists them at the top with **Open** and **Dismiss** until you deal with them. This works even when macOS hides the notification (Focus mode, or notifications turned off for Chrome).
 - Deleting a bookmark removes its reminder.
-- Reminders are kept in the extension, not in your note: they need Chrome to be running and don't carry over to another computer.
+- **Reminders are also written into your note**, at the end of the bookmark's line, for example `⏰ 2026-11-24 09:00 (weekly)`. You can see them in Obsidian, and if you reinstall the extension or open the vault on another computer, the extension picks them up again the next time you open the popup. The mark moves to the next date after a repeating reminder fires and disappears after a one-off.
+- Reminders need Chrome to be running to notify you.
 
 ### Themes
 
@@ -376,7 +377,7 @@ Type `ob` in the address bar, press **Tab** (or Space), then type words from a t
 
 - After saving from the popup, the toast shows **Undo** for a moment.
 - Deleting a bookmark and every bulk action (move, tag, mark read, delete) also offer **Undo** for a few seconds. Undo puts the bookmark notes back exactly as they were.
-- Before each bulk action and each Chrome import, a dated copy of your bookmark notes is saved to `Bookmarks/Backups/` as a `.md.bak` file. Obsidian ignores that file type, so the copies don't show up in search, tags or task lists. To use one, rename it to `.md`. They are never deleted automatically.
+- Before each bulk action and each Chrome import, a dated copy of your bookmark notes is saved to `Bookmarks/Backups/` as a `.md.bak` file. Obsidian ignores that file type, so the copies don't show up in search, tags or task lists. To use one, rename it to `.md`. Only the 10 newest copies of each note are kept; older ones are removed automatically.
 - In the **Bookmarks** tab, hover an entry and click **✕** to delete it. Only the list entry is removed; a dedicated note or downloaded image stays in the vault.
 - If Obsidian isn't running, the save is queued (the icon shows **…**) and written within a minute of Obsidian coming back. Quick-saves, right-click saves and popup saves are all queued; *Save all tabs* is not.
 
@@ -409,6 +410,7 @@ Type `ob` in the address bar, press **Tab** (or Space), then type words from a t
 | Also log each save in today's daily note | off | REST mode. Appends the entry to the end of today's daily note; needs Obsidian's *Daily notes* core plugin (or Periodic Notes). |
 | One note per section | off | REST mode. New saves go to `<bookmarks folder>/<Section>.md`. The Bookmarks tab, duplicate check and ★ badge read every note in that folder, so entries already in the hub note still show. |
 | Import Chrome bookmarks | — | Button at the bottom of the settings page. Copies your Chrome bookmarks into Obsidian: folders become sections, links already saved are skipped. Asks for bookmark access when you click it. |
+| Hide in the popup | nothing hidden | Tick the controls you don't use (theme dropdown, stats line, tag chips, sort, bulk select, check links, export, save all tabs, remind me, markdown preview, create its own note) to make the popup calmer. |
 | Export / Import | — | Buttons at the bottom of the settings page. The export file never contains your API key. |
 
 ---

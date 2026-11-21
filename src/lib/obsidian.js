@@ -80,8 +80,17 @@ export class RestClient {
 
   /** Markdown files directly inside a folder (not recursive). */
   async list(dir) {
+    return (await this.listAll(dir)).filter((f) => f.endsWith('.md')).map((f) => `${dir}/${f}`);
+  }
+
+  /** Every name directly inside a folder (sub-folders end with "/"). */
+  async listAll(dir) {
     const res = await this.req(`/vault/${encPath(dir)}/`, { allow404: true });
-    return res ? ((await res.json()).files || []).filter((f) => f.endsWith('.md')).map((f) => `${dir}/${f}`) : [];
+    return res ? (await res.json()).files || [] : [];
+  }
+
+  async remove(path) {
+    await this.req(`/vault/${encPath(path)}`, { method: 'DELETE', allow404: true });
   }
 
   /** Append to today's daily note (uses Obsidian's own daily-note settings). */

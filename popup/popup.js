@@ -273,6 +273,12 @@ const tomorrow9 = () => {
 async function loadReminders() {
   const { reminders: list = [] } = await chrome.storage.local.get('reminders');
   reminders = new Map(list.filter((r) => !r.snooze).map((r) => [canonUrl(r.url), r]));
+  // Reminders written in the note but unknown here (reinstall, another computer) are picked up again.
+  for (const e of data.entries) {
+    if (!e.remind || reminders.has(canonUrl(e.url)) || !(e.remind.at > Date.now() || e.remind.repeat)) continue;
+    reminders.set(canonUrl(e.url), e.remind);
+    await send('remind', { url: e.url, title: e.title, at: e.remind.at, repeat: e.remind.repeat, fromNote: true }).catch(() => {});
+  }
 }
 
 $('remind').onchange = () => {
@@ -327,8 +333,7 @@ function openRemindBar(e) {
 const closeRemindBar = () => (($('remind-bar').hidden = true), (reminding = null));
 const afterReminderChange = async (msg) => {
   closeRemindBar();
-  await loadReminders();
-  renderList();
+  await loadBookmarks(); // the note changed too (its reminder mark), so reload both
   toast(msg);
 };
 $('rb-close').onclick = closeRemindBar;
@@ -989,9 +994,27 @@ async function checkStatus() {
   }
 }
 
+// Controls that Settings → "Hide in the popup" can switch off.
+const HIDEABLE = {
+  theme: '#theme',
+  dedicated: 'label:has(#dedicated)',
+  remind: 'label:has(#remind)',
+  preview: 'details.preview',
+  tabs: '#save-tabs',
+  stats: '#stats',
+  tags: '#tag-cloud',
+  sort: '#sort',
+  select: '#select-mode',
+  check: '#check',
+  export: '#export',
+};
+
 async function init() {
   S = await getSettings();
   document.documentElement.dataset.theme = $('theme').value = S.theme;
+  for (const [key, sel] of Object.entries(HIDEABLE)) {
+    document.querySelectorAll(sel).forEach((n) => n.classList.toggle('off', (S.hide || []).includes(key)));
+  }
   $('readlater').checked = S.readLater;
   $('dedicated').disabled = S.mode !== 'rest';
   if (S.mode !== 'rest') $('dedicated').parentElement.title = 'Requires Local REST API mode';

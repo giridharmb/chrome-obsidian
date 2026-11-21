@@ -387,6 +387,8 @@ try {
     const set = await storage('reminders');
     ok(set.length === 1 && set[0].at === at.getTime() && set[0].repeat === 'daily', `stored reminder: ${JSON.stringify(set)}`);
     ok(await popup.$eval('#list .item .rem', (n) => n.textContent.includes('daily')), 'row does not show the reminder');
+    const hhmm = `${String(at.getHours()).padStart(2, '0')}:${String(at.getMinutes()).padStart(2, '0')}`;
+    await until(() => lineOf('E2E Video').endsWith(`⏰ ${today} ${hhmm} (daily)`), `reminder written in the note (line: ${lineOf('E2E Video')})`);
     await popup.select('#show', 'reminders');
     ok((await rows()).join() === 'E2E Video', 'Reminders view wrong');
 
@@ -396,6 +398,12 @@ try {
     ok((await ext.evaluate(() => chrome.action.getBadgeText({}))) === '1', 'toolbar count not shown');
     const next = await storage('reminders');
     ok(next.length === 1 && next[0].at === at.getTime() + 86400000, 'daily reminder not rescheduled for tomorrow');
+    await until(() => /⏰ \d{4}-\d{2}-\d{2} \d{2}:\d{2} \(daily\)$/.test(lineOf('E2E Video')) && !lineOf('E2E Video').includes(`⏰ ${today}`), 'note shows the next occurrence');
+
+    // Reinstall / second computer: the extension forgets, the note remembers.
+    await ext.evaluate(() => chrome.storage.local.set({ reminders: [] }));
+    await openPopup();
+    await until(async () => ((await storage('reminders')) || []).length === 1, 'reminder restored from the note');
 
     await openPopup();
     ok(await popup.$eval('#due', (n) => !n.hidden && n.textContent.includes('E2E Video')), 'due reminder not listed in the popup');
@@ -408,6 +416,22 @@ try {
     await popup.click('#rb-del');
     await waitToast('Reminder removed');
     ok((await storage('reminders')).length === 0, 'reminder not removed');
+    ok(!lineOf('E2E Video').includes('⏰'), 'reminder mark left in the note');
+  });
+
+  await step('Settings: hide popup controls', async () => {
+    await ext.reload();
+    await ext.$eval('[data-hide="stats"]', (n) => n.click());
+    await ext.$eval('[data-hide="export"]', (n) => n.click());
+    await ext.$eval('#save-settings', (n) => n.click());
+    await until(async () => ((await storage('settings')).hide || []).join() === 'stats,export', 'hide setting saved');
+    await guard();
+    await openPopup();
+    await tab('browse');
+    const shown = (sel) => popup.$eval(sel, (n) => getComputedStyle(n).display !== 'none');
+    ok(!(await shown('#stats')) && !(await shown('#export')), 'hidden controls still visible');
+    ok((await shown('#sort')) && (await shown('#check')), 'other controls should stay');
+    await setSettings({ hide: [] });
   });
 
   await step('No JavaScript errors in the popup, settings page or background', async () => {

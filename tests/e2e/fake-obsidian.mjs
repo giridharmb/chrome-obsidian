@@ -46,6 +46,7 @@ export function startFakeObsidian({ key = 'test-key', port = 27999 } = {}) {
     if (url.pathname.startsWith('/vault/')) {
       const path = decodeURIComponent(url.pathname.slice('/vault/'.length));
       if (req.method === 'PUT') return vault.set(path, body), send(204, '');
+      if (req.method === 'DELETE') return send(vault.delete(path) ? 204 : 404, '');
       if (path === '' || path.endsWith('/')) {
         const names = new Set();
         for (const k of vault.keys()) {

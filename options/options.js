@@ -17,6 +17,7 @@ function readForm() {
   for (const k of TEXT) s[k] = $(k).value.trim();
   for (const k of BOOL) s[k] = $(k).checked;
   s.mode = document.querySelector('input[name=mode]:checked')?.value || 'rest';
+  s.hide = [...document.querySelectorAll('[data-hide]:checked')].map((n) => n.dataset.hide);
   s.categories = lines($('categories').value);
   s.defaultCategory = $('defaultCategory').value || s.categories[0];
   s.imageCategory = $('imageCategory').value || s.categories[0];
@@ -52,6 +53,7 @@ async function load() {
   const s = await getSettings();
   for (const k of TEXT) $(k).value = s[k];
   document.documentElement.dataset.theme = s.theme;
+  document.querySelectorAll('[data-hide]').forEach((n) => (n.checked = (s.hide || []).includes(n.dataset.hide)));
   for (const k of BOOL) $(k).checked = !!s[k];
   document.querySelector(`input[name=mode][value="${s.mode}"]`).checked = true;
   $('categories').value = s.categories.join('\n');

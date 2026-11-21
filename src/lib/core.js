@@ -15,6 +15,8 @@ import {
   removeEntry,
   takeEntry,
   togglePin,
+  setReminderMark,
+  keepReminderMark,
   categoryTag,
   norm,
   shrinkSections,
@@ -234,9 +236,31 @@ export async function snapshot(s, { backup = false } = {}) {
   if (!backup) return;
   // ".bak" keeps the copies out of Obsidian's search, tags and task lists.
   const stamp = `${fmtDate()} ${fmtTime().replace(':', '')}`;
+  const dir = `${dirOf(s.bookmarksFile)}/Backups`;
   for (const [f, content] of Object.entries(snap)) {
-    if (content != null) await c.write(`${dirOf(s.bookmarksFile)}/Backups/${f.split('/').pop().replace(/\.md$/, '')} ${stamp}.md.bak`, content);
+    if (content != null) await c.write(`${dir}/${f.split('/').pop().replace(/\.md$/, '')} ${stamp}.md.bak`, content);
   }
+  // Keep the newest KEEP_BACKUPS copies of each note. The timestamp in the name sorts oldest first.
+  const byNote = new Map();
+  for (const name of (await c.listAll(dir).catch(() => [])).filter((n) => BACKUP_NAME.test(n)).sort()) {
+    const note = name.replace(BACKUP_NAME, '');
+    byNote.set(note, [...(byNote.get(note) || []), name]);
+  }
+  for (const names of byNote.values()) {
+    for (const old of names.slice(0, -KEEP_BACKUPS)) await c.remove(`${dir}/${old}`).catch(() => {});
+  }
+}
+
+const KEEP_BACKUPS = 10;
+const BACKUP_NAME = / \d{4}-\d{2}-\d{2} \d{4}\.md\.bak$/;
+
+/** Writes the reminder mark on the entry's line (null clears it), in whichever note holds the entry. */
+export async function markReminder(s, url, mark) {
+  if (s.mode !== 'rest' || !s.apiKey) return false;
+  for (const f of await bookmarkFiles(s)) {
+    if (await editNote(s, f, (cur) => cur && setReminderMark(cur, url, mark))) return true;
+  }
+  return false;
 }
 
 /**
@@ -307,7 +331,7 @@ export async function moveBookmark(s, { url, file, section, to, line }) {
   const redo = (block) => {
     const [first, ...rest] = block.split('\n');
     const retagged = first.split(' ').map((w) => (oldTag && w === oldTag ? newTag : w)).join(' ');
-    return [line ?? retagged, ...rest].join('\n');
+    return [line != null ? keepReminderMark(first, line) : retagged, ...rest].join('\n');
   };
   const place = (cur, block) =>
     insertUnderHeading(shrinkSections(cur ?? '', s.categories), to, block, { newestFirst: s.newestFirst }).replace(/^\n+/, '');

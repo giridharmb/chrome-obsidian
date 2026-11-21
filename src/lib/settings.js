@@ -52,6 +52,7 @@ export const DEFAULTS = {
   linkDate: false,
   downloadImages: false,
   closeAfterSave: true,
+  hide: [], // popup controls switched off in settings: theme, dedicated, remind, preview, tabs, stats, tags, sort, select, check, export
   theme: 'system', // or light, dark, nord, dracula, solarized-light, solarized-dark, gruvbox, rose-pine, tokyo-night, catppuccin, synthwave, matrix, cyberpunk, sakura, forest, coffee
   dailyNote: false, // also append each save to today's daily note (REST mode)
   splitBySection: false, // one note per section next to the bookmarks note (REST mode)

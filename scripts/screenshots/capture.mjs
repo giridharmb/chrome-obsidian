@@ -46,7 +46,7 @@ const SCENES = [
   { name: 'theme-forest', page: 'popup', q: 'scene=browse&theme=forest', size: [800, 600] },
   { name: 'theme-coffee', page: 'popup', q: 'scene=browse&theme=coffee', size: [800, 600] },
   { name: 'popup-large', page: 'popup', q: 'scene=browse&big=5000', size: [800, 420] },
-  { name: 'options', page: 'options', q: '', size: [900, 1660] },
+  { name: 'options', page: 'options', q: '', size: [900, 2200] },
 ];
 
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.json': 'application/json' };

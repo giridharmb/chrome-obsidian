@@ -1,7 +1,7 @@
 import { getSettings } from './lib/settings.js';
 import { getPageInfo, getLinkText } from './lib/page.js';
 import * as core from './lib/core.js';
-import { canonUrl, stripIcon } from './lib/markdown.js';
+import { canonUrl, stripIcon, reminderMark } from './lib/markdown.js';
 import { advance, upsert } from './lib/reminders.js';
 
 /* ---------------- Context menus ---------------- */
@@ -64,6 +64,12 @@ chrome.alarms.onAlarm.addListener(async () => {
   // the popup lists what is due until it is dismissed.
   chrome.action.setBadgeBackgroundColor({ color: '#dc2626' });
   chrome.action.setBadgeText({ text: String(Object.keys({ ...fired, ...Object.fromEntries(due.map((r) => [r.url, 1])) }).length) });
+  // Bring the mark in the note up to date: next date for a repeat, gone for a one-off.
+  const s = await getSettings();
+  for (const r of due.filter((x) => !x.snooze)) {
+    const next = keep.find((k) => k.url === r.url && !k.snooze);
+    await core.markReminder(s, r.url, next ? reminderMark(next.at, next.repeat) : null).catch(() => {});
+  }
 });
 
 async function setReminder(r) {
@@ -204,8 +210,15 @@ const handlers = {
   snapshot: (s, m) => core.snapshot(s, m),
   restore: (s) => core.restore(s).finally(markActive),
   pin: (s, m) => core.pin(s, m.url, m.file),
-  remind: (s, m) => setReminder({ url: m.url, title: m.title, at: m.at, repeat: m.repeat || '' }),
-  unremind: (s, m) => clearReminders(m.url),
+  remind: async (s, m) => {
+    await setReminder({ url: m.url, title: m.title, at: m.at, repeat: m.repeat || '' });
+    // fromNote: the popup is restoring a reminder it found in the note, so the mark is already there.
+    if (!m.fromNote) await core.markReminder(s, m.url, reminderMark(m.at, m.repeat)).catch(() => {});
+  },
+  unremind: async (s, m) => {
+    await clearReminders(m.url);
+    await core.markReminder(s, m.url, null).catch(() => {});
+  },
   dismissDue: async (s, m) => {
     const { fired = {} } = await chrome.storage.local.get('fired');
     delete fired[m.url];

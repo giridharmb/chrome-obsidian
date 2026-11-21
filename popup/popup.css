@@ -37,7 +37,7 @@
 }
 
 * { box-sizing: border-box; }
-[hidden] { display: none !important; }
+[hidden], .off { display: none !important; }
 html, body { margin: 0; }
 body {
   width: 800px;

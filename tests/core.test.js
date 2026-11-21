@@ -7,6 +7,11 @@ const vault = new Map();
 globalThis.fetch = async (url, { method = 'GET', body } = {}) => {
   const path = decodeURIComponent(new URL(url).pathname.replace('/vault/', ''));
   if (method === 'PUT') return vault.set(path, body), new Response('', { status: 200 });
+  if (method === 'DELETE') return new Response('', { status: vault.delete(path) ? 200 : 404 });
+  if (path.endsWith('/')) {
+    const files = [...vault.keys()].filter((k) => k.startsWith(path) && !k.slice(path.length).includes('/')).map((k) => k.slice(path.length));
+    return files.length ? new Response(JSON.stringify({ files })) : new Response('{}', { status: 404 });
+  }
   return vault.has(path) ? new Response(vault.get(path)) : new Response('{}', { status: 404 });
 };
 
@@ -67,3 +72,29 @@ await assert.rejects(async () => core.restore(s)); // one undo per snapshot
 await core.pin(s, 'https://b.com');
 assert.ok(vault.get(F).includes('- [B](https://b.com) #pinned #bookmark/inbox'));
 console.log('undo / pin OK');
+
+// Reminder mark in the note: written, kept through an edit and a move, cleared.
+vault.clear();
+vault.set(F, start);
+const mark = '⏰ 2026-12-01 09:00 (weekly)';
+assert.equal(await core.markReminder(s, 'https://a.com', mark), true);
+assert.ok(vault.get(F).includes(`2026-01-01 ${mark}\n\t> quote`), 'mark goes at the end of the entry line');
+await core.updateBookmark(s, { url: 'https://a.com', section: 'Inbox', item: { title: 'A3', url: 'https://a.com', category: 'Dev', tags: [], readLater: true, date: '2026-01-01' } });
+assert.ok(vault.get(F).includes(`- [ ] [A3](https://a.com) #bookmark/dev · a.com · 2026-01-01 ${mark}\n\t> quote`), 'edit + move keeps the mark');
+const parsed = (await core.getBookmarks(s)).entries.find((e) => e.title === 'A3');
+assert.deepEqual([parsed.date, parsed.note, parsed.remind.repeat, new Date(parsed.remind.at).getHours()], ['2026-01-01', '', 'weekly', 9]);
+await core.markReminder(s, 'https://a.com', null);
+assert.ok(!vault.get(F).includes('⏰'));
+assert.equal(await core.markReminder(s, 'https://nope.com', mark), false);
+
+// Backups: only the 10 newest copies of a note are kept; other files in the folder are left alone.
+vault.clear();
+vault.set(F, start);
+for (let d = 1; d <= 14; d++) vault.set(`Bookmarks/Backups/Bookmarks 2025-01-${String(d).padStart(2, '0')} 0900.md.bak`, 'old');
+vault.set('Bookmarks/Backups/my own file.md', 'keep me');
+await core.snapshot(s, { backup: true });
+const baks = [...vault.keys()].filter((k) => k.endsWith('.md.bak')).sort();
+assert.equal(baks.length, 10);
+assert.ok(!baks.some((k) => /2025-01-0[1-5] /.test(k)) && baks.some((k) => k.includes('2025-01-14')), 'the oldest copies are the ones removed');
+assert.equal(vault.get('Bookmarks/Backups/my own file.md'), 'keep me');
+console.log('reminder mark / backup cleanup OK');

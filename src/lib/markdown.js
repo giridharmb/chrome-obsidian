@@ -293,7 +293,8 @@ export function parseBookmarks(content) {
     }
     const m = LIST_ITEM.exec(line); // top-level items only
     if (!m) return;
-    const rest = m[3];
+    const remind = parseReminderMark(m[3]);
+    const rest = m[3].replace(REMIND, '');
     const links = [...rest.matchAll(/(!?)\[((?:\\.|[^\]\\])*)\]\(([^)\s]+)\)/g)].filter((x) => !x[1]);
     const urlLink = links.find((x) => /^https?:/i.test(x[3]));
     if (!urlLink) return;
@@ -316,6 +317,7 @@ export function parseBookmarks(content) {
       notePath: wiki && !isImage ? wiki[1] : null,
       image: isImage,
       pinned: tags.includes('#pinned'),
+      remind,
       line: i,
     });
   });
@@ -342,6 +344,32 @@ export function toggleEntry(content, url) {
 export const removeEntry = (content, url) => takeEntry(content, url)?.content ?? null;
 
 /** Cuts that entry out: { content: note without it, block: its lines, index: line it started on }. */
+// A reminder is also written at the end of the entry's line, e.g. " ⏰ 2026-11-24 09:00 (daily)",
+// so it is visible in Obsidian and can be restored after a reinstall or on another computer.
+const REMIND = /\s⏰ (\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})(?: \((daily|weekly|monthly)\))?/;
+
+export function reminderMark(at, repeat) {
+  const d = new Date(at);
+  return `⏰ ${fmtDate(d)} ${fmtTime(d)}${repeat ? ` (${repeat})` : ''}`;
+}
+
+export function parseReminderMark(line) {
+  const m = REMIND.exec(line);
+  return m ? { at: new Date(+m[1], m[2] - 1, +m[3], +m[4], +m[5]).getTime(), repeat: m[6] || '' } : null;
+}
+
+/** Sets the reminder mark on an entry's line, or removes it when `mark` is null. Null if the entry is not there. */
+export function setReminderMark(content, url, mark) {
+  const lines = content.split('\n');
+  const i = findEntry(lines, url);
+  if (i === -1) return null;
+  lines[i] = lines[i].replace(REMIND, '') + (mark ? ` ${mark}` : '');
+  return lines.join('\n');
+}
+
+/** Carries a reminder mark over when an entry's line is rewritten (edit). */
+export const keepReminderMark = (oldLine, newLine) => newLine + (REMIND.exec(oldLine)?.[0] || '');
+
 const findEntry = (lines, url) => {
   const target = canonUrl(url);
   return lines.findIndex((l) => /^[-*+]\s/.test(l) && [...l.matchAll(/\]\(([^)\s]+)\)/g)].some((x) => canonUrl(x[1]) === target));
