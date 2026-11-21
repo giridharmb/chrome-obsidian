@@ -293,6 +293,25 @@ function setReminder(item) {
 }
 
 // The bell on a bookmark row opens this bar to set, change or remove its reminder.
+// Reminders that have come due stay listed at the top of the popup until opened or dismissed,
+// so one is never lost just because the system hid the notification.
+async function renderDue() {
+  const { fired = {} } = await chrome.storage.local.get('fired');
+  const done = (url) => send('dismissDue', { url }).then(renderDue, (e) => toast(e.message, true));
+  $('due').hidden = !Object.keys(fired).length;
+  $('due').replaceChildren(
+    ...Object.entries(fired).map(([url, title]) =>
+      el(
+        'div',
+        {},
+        el('span', { textContent: `⏰ ${title || url}`, title: url }),
+        el('button', { className: 'small primary', textContent: 'Open', onclick: () => (openTab(url), done(url)) }),
+        el('button', { className: 'small', textContent: 'Dismiss', onclick: () => done(url) })
+      )
+    )
+  );
+}
+
 let reminding = null;
 function openRemindBar(e) {
   reminding = e;
@@ -302,6 +321,8 @@ function openRemindBar(e) {
   $('rb-repeat').value = r?.repeat || '';
   $('rb-del').hidden = !r;
   $('remind-bar').hidden = false;
+  $('remind-bar').scrollIntoView({ block: 'nearest' });
+  $('rb-at').focus();
 }
 const closeRemindBar = () => (($('remind-bar').hidden = true), (reminding = null));
 const afterReminderChange = async (msg) => {
@@ -978,6 +999,7 @@ async function init() {
   $('title').focus();
   $('title').select();
   checkStatus();
+  renderDue();
   loadBookmarks();
   send('tags').then((t) => ((vaultTags = t || []), renderTagSuggestions()), () => {});
 }

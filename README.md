@@ -328,7 +328,8 @@ Click **▯** in the popup header (or right-click the toolbar icon → *Open Obs
 - **Set one while saving** with *Remind me* on the Save tab, or **on any saved bookmark** with the ⏰ button on its row. The bar that opens lets you choose the date, time and repeat, or remove the reminder.
 - **Repeating reminders** come back every day, week or month until you remove them. If Chrome was closed when one was due, you get it once when Chrome starts, and the next one is scheduled from then.
 - **The Reminders view** (first dropdown in the Bookmarks tab) lists every bookmark with a pending reminder, soonest first. Each row shows its time and repeat.
-- **The notification** stays on screen until you act. Click it to open the link, or use **Later today** (3 hours) or **Tomorrow 9:00** to snooze. Snoozing a repeating reminder doesn't cancel the repeat. On macOS the snooze buttons are under the notification's *Options* menu.
+- **When a reminder comes due** you get a Chrome notification. Click it to open the link, or use **Later today** (3 hours) or **Tomorrow 9:00** to snooze. Snoozing a repeating reminder doesn't cancel the repeat. On macOS the snooze buttons are under the notification's *Options* menu.
+- **You can't miss one:** the toolbar icon also shows a red count of due reminders, and the popup lists them at the top with **Open** and **Dismiss** until you deal with them. This works even when macOS hides the notification (Focus mode, or notifications turned off for Chrome).
 - Deleting a bookmark removes its reminder.
 - Reminders are kept in the extension, not in your note: they need Chrome to be running and don't carry over to another computer.
 
@@ -445,11 +446,20 @@ Without Dataview, Obsidian's built-in search works too: `tag:#bookmark/dev`, `ta
 
 ### Automated
 
-Unit tests cover the markdown logic (formatting, section insertion, parsing, toggling, rendering):
-
 ```bash
 npm test
 ```
+
+Fast checks that need neither Chrome nor Obsidian: the markdown logic, saving/moving/undo against an in-memory vault, reminder scheduling, and the background script's right-click menu, quick-save shortcut and address-bar search.
+
+```bash
+npm install        # once, downloads a test copy of Chrome
+npm run test:e2e
+```
+
+End-to-end tests: the real extension in a real Chrome, saving into a stand-in Obsidian server with an in-memory vault. They cover the settings page, saving from the popup, duplicates and the ★ badge, undo, the Bookmarks tab (filter, views, sort, tick, pin, edit, drag, delete, bulk actions, keyboard), export, link checking, vault search, dedicated and daily notes, one note per section, themes, the offline queue and reminders. The run takes about three minutes because it waits on the real one-minute timer twice.
+
+The end-to-end tests never contact your real Obsidian: they point the extension at the stand-in server first and abort if that can't be confirmed.
 
 ### Manual checklist
 
@@ -487,6 +497,7 @@ ONLY=popup-save,options npm run screenshots
 | `curl: (60) SSL certificate problem: self signed certificate` | Expected with HTTPS. Use `curl -k`, or switch to the HTTP server. |
 | **"Obsidian rejected the API key"** | Re-copy the key from the plugin settings (it changes if you click *Reset API key*). |
 | Nothing happens on a page | Chrome blocks extensions on `chrome://` pages and the Chrome Web Store. Try a normal website. |
+| No reminder notification appears | Check **System Settings → Notifications → Google Chrome** is allowed and that no Focus mode is on. Due reminders are always listed at the top of the popup and counted on the toolbar icon, whatever the system does with the notification. |
 | Shortcut doesn't work | Another app/extension may own it. Reassign at `chrome://extensions/shortcuts`. |
 | URI mode opens the wrong vault | Set **Vault name** exactly as shown in Obsidian's vault switcher. |
 | Image saved as a remote link instead of a file | Enable *Download images* and grant site access; some sites block hotlinking — the extension then falls back to the remote URL. |
@@ -533,7 +544,7 @@ chrome-obsidian/
 ├── popup/                     Popup UI (also used as the side panel)
 ├── options/                   Settings page
 ├── icons/                     Extension icons
-├── tests/markdown.test.js     Node unit tests
+├── tests/                     Unit tests, plus tests/e2e (real Chrome + stand-in Obsidian server)
 ├── scripts/screenshots/       Headless-Chrome screenshot harness (mocked chrome.* APIs)
 └── docs/images/               README screenshots
 ```

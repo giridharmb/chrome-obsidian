@@ -39,7 +39,8 @@ chrome.runtime.onInstalled.addListener(async ({ reason }) => {
 chrome.runtime.onStartup.addListener(buildMenus);
 
 // Retry bookmarks that were saved while Obsidian was closed.
-chrome.alarms.create('flush', { periodInMinutes: 1 });
+// Only if missing: re-creating it on every service-worker start would keep pushing the next tick back.
+chrome.alarms.get('flush').then((a) => a || chrome.alarms.create('flush', { periodInMinutes: 1 }));
 chrome.alarms.onAlarm.addListener(async () => {
   core.flushQueue(await getSettings()).catch(() => {});
   // Reminders ride on the same once-a-minute alarm.
@@ -55,9 +56,14 @@ chrome.alarms.onAlarm.addListener(async () => {
       title: r.repeat ? `Time to read this (${r.repeat})` : 'Time to read this',
       message: r.title || r.url,
       buttons: [{ title: 'Later today' }, { title: 'Tomorrow 9:00' }],
-      requireInteraction: true,
+      // No requireInteraction: on macOS that goes through Chrome's separate "alerts" channel,
+      // which is off by default, and the notification is silently dropped.
     });
   }
+  // The notification can still be hidden by Focus or system settings, so also flag it on the icon;
+  // the popup lists what is due until it is dismissed.
+  chrome.action.setBadgeBackgroundColor({ color: '#dc2626' });
+  chrome.action.setBadgeText({ text: String(Object.keys({ ...fired, ...Object.fromEntries(due.map((r) => [r.url, 1])) }).length) });
 });
 
 async function setReminder(r) {
@@ -110,7 +116,8 @@ async function markSaved(tab) {
   }
   try {
     if (saved) await chrome.action.setBadgeBackgroundColor({ color: '#7c3aed', tabId: tab.id });
-    await chrome.action.setBadgeText({ text: saved ? '★' : '', tabId: tab.id });
+    // null (not '') hands the tab back to the global badge, which carries the due-reminder count.
+    await chrome.action.setBadgeText({ text: saved ? '★' : null, tabId: tab.id });
   } catch {}
 }
 
@@ -199,6 +206,14 @@ const handlers = {
   pin: (s, m) => core.pin(s, m.url, m.file),
   remind: (s, m) => setReminder({ url: m.url, title: m.title, at: m.at, repeat: m.repeat || '' }),
   unremind: (s, m) => clearReminders(m.url),
+  dismissDue: async (s, m) => {
+    const { fired = {} } = await chrome.storage.local.get('fired');
+    delete fired[m.url];
+    await chrome.storage.local.set({ fired });
+    const left = Object.keys(fired).length;
+    await chrome.action.setBadgeText({ text: left ? String(left) : '' });
+    chrome.notifications.clear(`remind:${m.url}`);
+  },
   importBookmarks: (s, m) => core.importBookmarks(s, m.items),
   checkLinks: (s, m) => core.checkLinks(m.urls),
   toggleRead: (s, m) => core.toggleRead(s, m.url, m.file),

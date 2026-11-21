@@ -1,12 +1,16 @@
 {
   "name": "obsidian-bookmarker",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "private": true,
   "type": "module",
   "description": "Chrome extension: save pages, links, images and highlights into an organized Obsidian bookmarks note.",
   "scripts": {
-    "test": "node tests/markdown.test.js && node tests/core.test.js && node tests/reminders.test.js",
+    "test": "node tests/markdown.test.js && node tests/core.test.js && node tests/reminders.test.js && node tests/background.test.js",
     "zip": "zip -r obsidian-bookmarker.zip manifest.json icons src popup options -x '*.DS_Store'",
-    "screenshots": "node scripts/screenshots/capture.mjs"
+    "screenshots": "node scripts/screenshots/capture.mjs",
+    "test:e2e": "node tests/e2e/run.mjs"
+  },
+  "devDependencies": {
+    "puppeteer": "^24.43.1"
   }
 }

@@ -215,7 +215,8 @@ blockquote {
 .row > select, .row > button { flex: none; }
 .row > select { max-width: 124px; }
 .row > input { min-width: 180px; }
-.bulk { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; background: var(--accent-soft); border-radius: var(--radius); padding: 6px 8px; }
+/* Sticky: these bars open at the top of a list you may have scrolled down. */
+.bulk { position: sticky; top: -12px; z-index: 5; box-shadow: 0 2px 8px rgba(0, 0, 0, .15); display: flex; gap: 6px; align-items: center; flex-wrap: wrap; background: var(--accent-soft); border-radius: var(--radius); padding: 6px 8px; }
 .bulk select, .bulk input { width: auto; padding: 4px 8px; font-size: 12px; }
 .bulk input { width: 130px; }
 .item.sel { background: var(--accent-soft); outline: 1px solid var(--accent); }
@@ -231,6 +232,9 @@ blockquote {
 #remind-at, #rb-at { width: 200px; padding: 3px 6px; font-size: 12px; }
 #rb-title { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .item .rem { color: var(--accent); }
+.due { margin: 10px 12px 0; display: flex; flex-direction: column; gap: 4px; }
+.due > div { display: flex; gap: 8px; align-items: center; background: var(--accent-soft); border-left: 3px solid var(--accent); border-radius: 6px; padding: 6px 10px; }
+.due span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #toast a { color: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; }
 #toast.err { background: var(--err); color: #fff; }
 
