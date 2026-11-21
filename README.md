@@ -250,7 +250,7 @@ Press `Alt+Shift+O` or click the toolbar icon.
 - **Note** — a one-liner appended after `—`. Type `[[` and a few letters to link a note from your vault; press **Tab** or click a suggestion.
 - **Include highlighted text** — appears when you had text selected on the page.
 - **Read later** — adds the `- [ ]` checkbox.
-- **Remind me** — tomorrow, in 3 days, a week or a month. Chrome shows a notification then; click it to open the link. Reminders live in the extension, not in your note, and need Chrome to be running.
+- **Remind me** — tomorrow, in 3 days, a week or a month, or **pick date & time…** for an exact moment. Once you choose one, a second dropdown sets it to repeat every day, week or month. See [Reminders](#reminders).
 - **Always save *site* to *section*** — appears under the section chips when you pick a section different from the automatic one. One click adds an auto-sort rule for that site.
 - **Create its own note** — also writes a dedicated note in the clippings folder.
 - **Markdown preview** — shows exactly what will be written and where.
@@ -295,7 +295,7 @@ Header buttons: **▯** open side panel · **↗** open the bookmarks note in Ob
 - Click a tag chip at the top, or a tag on any entry, to filter by it. Click again to clear it.
 - **Drag** a bookmark onto another section (its header or its list) to move it there. Its section tag is updated and any highlight quote moves with it.
 - Hover an entry and click **Edit** to change its title, section, tags or note in the Save tab, then **Update** (or **Cancel**).
-- **Views:** the first dropdown switches between All, Read later, Done, **Recent (last 20)**, **On this site**, **Pinned** and **Broken links**.
+- **Views:** the first dropdown switches between All, Read later, Done, **Recent (last 20)**, **On this site**, **Pinned**, **Reminders** and **Broken links**.
 - **Pin:** click ☆ on a row (or press `p`) to keep it at the top of its section; the **Pinned** view lists them all. Pinning adds a `#pinned` tag to the entry in your note.
 - **Stats:** a line above the list shows totals, how many are still to read, how many you saved this week, and your top sections and tags.
 - **Export:** download the current view as a bookmarks file any browser can import, or as a spreadsheet (.csv).
@@ -322,6 +322,15 @@ Searches **all notes in your vault** (not just bookmarks) via the REST API, as y
 <img src="docs/images/side-panel.png" width="340" alt="Side panel">
 
 Click **▯** in the popup header (or right-click the toolbar icon → *Open Obsidian side panel*). The panel stays open while you browse and updates to whichever tab is active.
+
+### Reminders
+
+- **Set one while saving** with *Remind me* on the Save tab, or **on any saved bookmark** with the ⏰ button on its row. The bar that opens lets you choose the date, time and repeat, or remove the reminder.
+- **Repeating reminders** come back every day, week or month until you remove them. If Chrome was closed when one was due, you get it once when Chrome starts, and the next one is scheduled from then.
+- **The Reminders view** (first dropdown in the Bookmarks tab) lists every bookmark with a pending reminder, soonest first. Each row shows its time and repeat.
+- **The notification** stays on screen until you act. Click it to open the link, or use **Later today** (3 hours) or **Tomorrow 9:00** to snooze. Snoozing a repeating reminder doesn't cancel the repeat. On macOS the snooze buttons are under the notification's *Options* menu.
+- Deleting a bookmark removes its reminder.
+- Reminders are kept in the extension, not in your note: they need Chrome to be running and don't carry over to another computer.
 
 ### Themes
 
@@ -518,6 +527,7 @@ chrome-obsidian/
 │       ├── core.js            Save / browse / search orchestration, serialized writes
 │       ├── markdown.js        Entry formatting, section insertion, parsing, safe MD renderer
 │       ├── obsidian.js        Local REST API client + obsidian:// URI builders
+│       ├── reminders.js       Reminder scheduling (repeat, snooze)
 │       ├── page.js            Page metadata extraction (title, og:*, selection)
 │       └── settings.js        Defaults + chrome.storage helpers
 ├── popup/                     Popup UI (also used as the side panel)

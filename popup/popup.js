@@ -257,12 +257,66 @@ function updatePreview() {
   $('target').textContent = `${S.bookmarksFile} › ${category}`;
 }
 
-function setReminder(item) {
-  const days = +$('remind').value;
-  if (!days) return;
-  $('remind').value = '';
-  send('remind', { url: item.url, title: item.title, days }).catch((e) => toast(e.message, true));
+/* ----- Reminders: fixed offsets or a chosen date & time, optionally repeating ----- */
+
+let reminders = new Map(); // canonical url → { at, repeat }
+const localInput = (ms) => new Date(ms - new Date(ms).getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+const whenText = (r) =>
+  `⏰ ${new Date(r.at).toLocaleString([], { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}${r.repeat ? ` · ${r.repeat}` : ''}`;
+const tomorrow9 = () => {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  d.setHours(9, 0, 0, 0);
+  return d.getTime();
+};
+
+async function loadReminders() {
+  const { reminders: list = [] } = await chrome.storage.local.get('reminders');
+  reminders = new Map(list.filter((r) => !r.snooze).map((r) => [canonUrl(r.url), r]));
 }
+
+$('remind').onchange = () => {
+  const v = $('remind').value;
+  $('remind-at').hidden = v !== 'pick';
+  $('remind-repeat').hidden = !v;
+  if (v === 'pick' && !$('remind-at').value) $('remind-at').value = localInput(tomorrow9());
+};
+
+function setReminder(item) {
+  const v = $('remind').value;
+  if (!v) return;
+  const at = v === 'pick' ? new Date($('remind-at').value).getTime() : Date.now() + +v * 86400000;
+  if (!(at > Date.now())) return toast('Reminder not set: pick a time in the future', true);
+  send('remind', { url: item.url, title: item.title, at, repeat: $('remind-repeat').value }).catch((e) => toast(e.message, true));
+  $('remind').value = $('remind-repeat').value = '';
+  $('remind').onchange();
+}
+
+// The bell on a bookmark row opens this bar to set, change or remove its reminder.
+let reminding = null;
+function openRemindBar(e) {
+  reminding = e;
+  const r = reminders.get(canonUrl(e.url));
+  $('rb-title').textContent = e.title;
+  $('rb-at').value = localInput(r?.at || tomorrow9());
+  $('rb-repeat').value = r?.repeat || '';
+  $('rb-del').hidden = !r;
+  $('remind-bar').hidden = false;
+}
+const closeRemindBar = () => (($('remind-bar').hidden = true), (reminding = null));
+const afterReminderChange = async (msg) => {
+  closeRemindBar();
+  await loadReminders();
+  renderList();
+  toast(msg);
+};
+$('rb-close').onclick = closeRemindBar;
+$('rb-set').onclick = () => {
+  const at = new Date($('rb-at').value).getTime();
+  if (!(at > Date.now())) return toast('Pick a time in the future', true);
+  send('remind', { url: reminding.url, title: reminding.title, at, repeat: $('rb-repeat').value }).then(() => afterReminderChange('Reminder set'), (e) => toast(e.message, true));
+};
+$('rb-del').onclick = () => send('unremind', { url: reminding.url }).then(() => afterReminderChange('Reminder removed'), (e) => toast(e.message, true));
 
 async function doSave(open) {
   if (!page.url) return;
@@ -450,6 +504,7 @@ function renderList() {
     if (show === 'site' && domainOf(e.url) !== site) return false;
     if (show === 'broken' && !broken.has(e.url)) return false;
     if (show === 'pinned' && !e.pinned) return false;
+    if (show === 'reminders' && !reminders.has(canonUrl(e.url))) return false;
     if (!f) return true;
     const hay = [e.title, e.url, e.section, e.note, ...e.tags].join(' ').toLowerCase();
     return words.every((w) => hay.includes(w));
@@ -464,7 +519,9 @@ function renderList() {
   const group = (name) => groups.get(norm(name)) || groups.set(norm(name), [name, []]).get(norm(name));
   // Unfiltered view lists every section, including empty ones.
   if (!f && show === 'all') [...S.categories, ...data.sections].forEach(group);
-  for (const e of items) group(show === 'recent' ? 'Recent' : e.section || 'Unsorted')[1].push(e);
+  const flat = { recent: 'Recent', reminders: 'Reminders' }[show]; // views shown as one list instead of by section
+  if (flat === 'Reminders') items.sort((a, b) => reminders.get(canonUrl(a.url)).at - reminders.get(canonUrl(b.url)).at);
+  for (const e of items) group(flat || e.section || 'Unsorted')[1].push(e);
   const order = SORTS[$('sort').value];
   for (const g of groups.values()) {
     if (order) g[1].sort(order);
@@ -492,7 +549,7 @@ function renderList() {
     // Drop a dragged bookmark on a section (its header or its list) to move it there.
     for (const zone of [h, g]) {
       zone.ondragover = (ev) => {
-        if (!dragged || show === 'recent' || norm(dragged.section) === norm(section)) return;
+        if (!dragged || flat || norm(dragged.section) === norm(section)) return;
         ev.preventDefault();
         h.classList.add('drop');
       };
@@ -742,6 +799,8 @@ function renderItem(e) {
   const meta = el('div', { className: 'm' }, `${domainOf(e.url)}${e.date ? ` · ${e.date}` : ''} `);
   for (const t of e.tags) meta.append(el('span', { className: 'tag', textContent: `${t} `, onclick: () => toggleFilter(t) }));
   if (e.note) meta.append(`— ${e.note}`);
+  const rem = reminders.get(canonUrl(e.url));
+  if (rem) meta.prepend(el('span', { className: 'rem', textContent: `${whenText(rem)} · ` }));
   if (broken.has(e.url)) meta.prepend(el('span', { className: 'bad', textContent: `⚠ ${broken.get(e.url)} · ` }));
   meta.title = meta.textContent;
   const tools = el(
@@ -751,6 +810,7 @@ function renderItem(e) {
     e.notePath ? el('button', { textContent: 'View', title: 'Preview note here', onclick: () => viewNote(`${e.notePath}.md`) }) : null,
     // Not for image entries: rewriting their line would drop the embedded picture.
     e.image ? null : el('button', { textContent: 'Edit', title: 'Edit title, section, tags and note', onclick: () => startEdit(e) }),
+    el('button', { textContent: '⏰', className: rem ? 'on' : '', title: rem ? 'Change or remove the reminder' : 'Remind me about this', onclick: () => openRemindBar(e) }),
     el('button', {
       textContent: e.pinned ? '★' : '☆',
       className: e.pinned ? 'on' : '',
@@ -809,6 +869,7 @@ async function loadBookmarks(quiet = false) {
     return;
   }
   selected.clear(); // they point at the old list
+  await loadReminders();
   if (!editing && !catTouched && page.url) category = suggestCategory();
   renderList();
   renderCats();

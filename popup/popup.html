@@ -99,6 +99,14 @@
             <option value="3">in 3 days</option>
             <option value="7">in a week</option>
             <option value="30">in a month</option>
+            <option value="pick">pick date &amp; time…</option>
+          </select>
+          <input type="datetime-local" id="remind-at" hidden>
+          <select id="remind-repeat" title="Repeat" hidden>
+            <option value="">once</option>
+            <option value="daily">every day</option>
+            <option value="weekly">every week</option>
+            <option value="monthly">every month</option>
           </select>
         </label>
       </div>
@@ -125,6 +133,7 @@
           <option value="recent">Recent (last 20)</option>
           <option value="site">On this site</option>
           <option value="pinned">Pinned</option>
+          <option value="reminders">Reminders</option>
           <option value="broken">Broken links</option>
         </select>
         <select id="sort" title="Order within each section">
@@ -150,6 +159,19 @@
         <button id="bulk-del" class="small">Delete</button>
         <button id="bulk-all" class="small">Select all shown</button>
         <button id="bulk-clear" class="small">Done</button>
+      </div>
+      <div id="remind-bar" class="bulk" hidden>
+        <b id="rb-title"></b>
+        <input type="datetime-local" id="rb-at">
+        <select id="rb-repeat" title="Repeat">
+            <option value="">once</option>
+            <option value="daily">every day</option>
+            <option value="weekly">every week</option>
+            <option value="monthly">every month</option>
+        </select>
+        <button id="rb-set" class="small primary">Set reminder</button>
+        <button id="rb-del" class="small">Remove</button>
+        <button id="rb-close" class="small">Close</button>
       </div>
       <div id="stats" class="stats"></div>
       <div id="tag-cloud" class="chips small"></div>

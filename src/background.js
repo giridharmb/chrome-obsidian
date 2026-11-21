@@ -2,6 +2,7 @@ import { getSettings } from './lib/settings.js';
 import { getPageInfo, getLinkText } from './lib/page.js';
 import * as core from './lib/core.js';
 import { canonUrl, stripIcon } from './lib/markdown.js';
+import { advance, upsert } from './lib/reminders.js';
 
 /* ---------------- Context menus ---------------- */
 
@@ -42,23 +43,46 @@ chrome.alarms.create('flush', { periodInMinutes: 1 });
 chrome.alarms.onAlarm.addListener(async () => {
   core.flushQueue(await getSettings()).catch(() => {});
   // Reminders ride on the same once-a-minute alarm.
-  const { reminders = [] } = await chrome.storage.local.get('reminders');
-  const due = reminders.filter((r) => r.at <= Date.now());
+  const { reminders = [], fired = {} } = await chrome.storage.local.get(['reminders', 'fired']);
+  const { due, keep } = advance(reminders);
   if (!due.length) return;
-  await chrome.storage.local.set({ reminders: reminders.filter((r) => r.at > Date.now()) });
+  // `fired` keeps the titles so a snooze button can re-create the reminder.
+  await chrome.storage.local.set({ reminders: keep, fired: { ...fired, ...Object.fromEntries(due.map((r) => [r.url, r.title])) } });
   for (const r of due) {
     chrome.notifications.create(`remind:${r.url}`, {
       type: 'basic',
       iconUrl: chrome.runtime.getURL('icons/icon128.png'),
-      title: 'Time to read this',
+      title: r.repeat ? `Time to read this (${r.repeat})` : 'Time to read this',
       message: r.title || r.url,
+      buttons: [{ title: 'Later today' }, { title: 'Tomorrow 9:00' }],
       requireInteraction: true,
     });
   }
 });
+
+async function setReminder(r) {
+  const { reminders = [] } = await chrome.storage.local.get('reminders');
+  await chrome.storage.local.set({ reminders: upsert(reminders, r) });
+}
+
+async function clearReminders(url) {
+  const { reminders = [] } = await chrome.storage.local.get('reminders');
+  await chrome.storage.local.set({ reminders: reminders.filter((r) => r.url !== url) });
+}
+
 chrome.notifications.onClicked.addListener((id) => {
   if (!id.startsWith('remind:')) return;
   chrome.tabs.create({ url: id.slice(7) });
+  chrome.notifications.clear(id);
+});
+chrome.notifications.onButtonClicked.addListener(async (id, button) => {
+  if (!id.startsWith('remind:')) return;
+  const url = id.slice(7);
+  const at = new Date();
+  if (button === 0) at.setHours(at.getHours() + 3);
+  else at.setDate(at.getDate() + 1), at.setHours(9, 0, 0, 0);
+  const { fired = {} } = await chrome.storage.local.get('fired');
+  await setReminder({ url, title: fired[url] || url, at: at.getTime(), repeat: '', snooze: true });
   chrome.notifications.clear(id);
 });
 chrome.storage.onChanged.addListener((changes) => {
@@ -164,7 +188,7 @@ chrome.commands.onCommand.addListener(async (command, tab) => {
 const handlers = {
   save: (s, m) => core.saveOrQueue(s, m.item).finally(markActive),
   saveTabs: async (s) => core.saveTabs(s, await chrome.tabs.query({ lastFocusedWindow: true })),
-  remove: (s, m) => core.removeBookmark(s, m.url, m.file).finally(markActive),
+  remove: (s, m) => core.removeBookmark(s, m.url, m.file).then(() => clearReminders(m.url)).finally(markActive),
   status: (s) => core.status(s),
   bookmarks: (s) => core.getBookmarks(s),
   tags: (s) => core.client(s).tags().catch(() => []), // older plugins: fall back to bookmark tags only
@@ -173,11 +197,8 @@ const handlers = {
   snapshot: (s, m) => core.snapshot(s, m),
   restore: (s) => core.restore(s).finally(markActive),
   pin: (s, m) => core.pin(s, m.url, m.file),
-  remind: async (s, m) => {
-    const { reminders = [] } = await chrome.storage.local.get('reminders');
-    const rest = reminders.filter((r) => r.url !== m.url); // one reminder per link
-    await chrome.storage.local.set({ reminders: [...rest, { url: m.url, title: m.title, at: Date.now() + m.days * 86400000 }] });
-  },
+  remind: (s, m) => setReminder({ url: m.url, title: m.title, at: m.at, repeat: m.repeat || '' }),
+  unremind: (s, m) => clearReminders(m.url),
   importBookmarks: (s, m) => core.importBookmarks(s, m.items),
   checkLinks: (s, m) => core.checkLinks(m.urls),
   toggleRead: (s, m) => core.toggleRead(s, m.url, m.file),

@@ -228,6 +228,9 @@ blockquote {
 .check select { width: auto; padding: 2px 6px; font-size: 12px; }
 .item .pin { color: var(--accent); margin-right: 4px; }
 .item .tools .on { color: var(--accent); }
+#remind-at, #rb-at { width: 200px; padding: 3px 6px; font-size: 12px; }
+#rb-title { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.item .rem { color: var(--accent); }
 #toast a { color: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; }
 #toast.err { background: var(--err); color: #fff; }
 
