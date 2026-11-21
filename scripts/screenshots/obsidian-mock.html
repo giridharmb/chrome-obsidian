@@ -1,0 +1,87 @@
+<!doctype html>
+<!-- Illustrations of the Obsidian setup steps for the README. These are drawn mock-ups, not captures of
+     Obsidian itself; the real screens may differ slightly between Obsidian and plugin versions. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Obsidian setup illustration</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #16161a; font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif; color: #dcddde; }
+  .win { margin: 18px; border-radius: 12px; background: #1e1e1e; border: 1px solid #383838; display: flex; height: calc(100vh - 36px); overflow: hidden; position: relative; }
+  .side { width: 220px; background: #262626; padding: 18px 10px; border-right: 1px solid #333; }
+  .side h4 { margin: 14px 10px 6px; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: #8a8a8a; }
+  .side div { padding: 6px 10px; border-radius: 6px; color: #b9b9b9; }
+  .side .on { background: #7c3aed; color: #fff; font-weight: 600; }
+  .main { flex: 1; padding: 26px 34px; overflow: hidden; }
+  h2 { margin: 0 0 18px; font-size: 19px; color: #fff; }
+  .row { display: flex; align-items: center; gap: 20px; padding: 14px 0; border-top: 1px solid #333; }
+  .row .t { flex: 1; }
+  .row b { display: block; color: #e6e6e6; font-weight: 600; }
+  .row span { color: #9a9a9a; font-size: 12.5px; }
+  .btn { background: #363636; color: #e6e6e6; border-radius: 6px; padding: 7px 14px; white-space: nowrap; }
+  .btn.cta { background: #7c3aed; color: #fff; font-weight: 600; }
+  .toggle { width: 42px; height: 24px; border-radius: 12px; background: #4a4a4a; position: relative; flex: none; }
+  .toggle::after { content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; }
+  .toggle.on { background: #7c3aed; }
+  .toggle.on::after { left: 21px; }
+  .field { background: #151515; border: 1px solid #3a3a3a; border-radius: 6px; padding: 8px 12px; font: 12.5px ui-monospace, Menlo, monospace; color: #c9c9c9; }
+  .search { width: 100%; margin-bottom: 16px; font: inherit; }
+  .card { border: 1px solid #3a3a3a; border-radius: 10px; padding: 16px 18px; background: #242424; max-width: 520px; }
+  .card h3 { margin: 0 0 4px; color: #fff; font-size: 16px; }
+  .card p { margin: 6px 0 14px; color: #a9a9a9; font-size: 13px; }
+  .meta { color: #8a8a8a; font-size: 12px; }
+  /* Numbered callouts pointing at what to click. */
+  .hl { outline: 2px solid #f5b83d; outline-offset: 4px; border-radius: 6px; position: relative; }
+  .hl::before { content: attr(data-n); position: absolute; top: -13px; left: -13px; width: 22px; height: 22px; border-radius: 50%; background: #f5b83d; color: #1a1a1a; font: 700 12px/22px -apple-system, sans-serif; text-align: center; }
+  .stamp { position: absolute; right: 14px; bottom: 10px; font-size: 11px; color: #777; }
+</style>
+</head>
+<body>
+<div class="win">
+  <div class="side" id="side"></div>
+  <div class="main" id="main"></div>
+  <div class="stamp">Illustration · your Obsidian may look slightly different</div>
+</div>
+<script>
+  const step = new URLSearchParams(location.search).get('step') || '1';
+  const side = (active, withPlugin) => `
+    <h4>Options</h4>
+    <div>Editor</div><div>Files and links</div><div>Appearance</div><div>Hotkeys</div><div>Core plugins</div>
+    <div class="${active === 'community' ? 'on' : ''}">Community plugins</div>
+    ${withPlugin ? `<h4>Community plugins</h4><div class="${active === 'rest' ? 'on' : ''}">Local REST API</div>` : ''}`;
+  const row = (title, desc, control) => `<div class="row"><div class="t"><b>${title}</b><span>${desc}</span></div>${control}</div>`;
+
+  const steps = {
+    1: {
+      side: side('community', false),
+      main: `<h2>Community plugins</h2>
+        ${row('Restricted mode', 'Community plugins are off until you turn them on.', '<div class="btn cta hl" data-n="1">Turn on community plugins</div>')}
+        ${row('Community plugins', 'Browse and install plugins made by the community.', '<div class="btn hl" data-n="2">Browse</div>')}
+        ${row('Installed plugins', 'Nothing installed yet.', '')}`,
+    },
+    2: {
+      side: side('community', false),
+      main: `<h2>Community plugins › Browse</h2>
+        <div class="field search hl" data-n="1">Local REST API</div>
+        <div class="card">
+          <h3>Local REST API</h3>
+          <div class="meta">By Adam Coddington</div>
+          <p>Get, change or otherwise interact with your notes in Obsidian via a REST API.</p>
+          <span class="btn cta hl" data-n="2">Install</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="btn hl" data-n="3">Enable</span>
+        </div>`,
+    },
+    3: {
+      side: side('rest', true),
+      main: `<h2>Local REST API</h2>
+        ${row('API Key', 'Sent by the extension with every request. Copy it into the extension settings.', '<div class="field hl" data-n="1">3f9c2a…e81d7b &nbsp;⧉ Copy</div>')}
+        ${row('Enable Non-encrypted (HTTP) Server', 'Serves on http://127.0.0.1:27123. Only reachable from this computer.', '<div class="toggle on hl" data-n="2"></div>')}
+        ${row('Non-encrypted (HTTP) Server Port', 'Default 27123', '<div class="field">27123</div>')}
+        ${row('Encrypted (HTTPS) Server Port', 'Default 27124. Needs the plugin certificate to be trusted.', '<div class="field">27124</div>')}`,
+    },
+  };
+  document.getElementById('side').innerHTML = steps[step].side;
+  document.getElementById('main').innerHTML = steps[step].main;
+</script>
+</body>
+</html>

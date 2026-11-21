@@ -157,10 +157,19 @@ the original transformer paper
 
 ### Step 1 — Install the Local REST API plugin in Obsidian
 
-1. Open Obsidian → **Settings** (⚙ bottom-left) → **Community plugins**.
-2. If prompted, click **Turn on community plugins**.
-3. Click **Browse**, search for **Local REST API**, click **Install**, then **Enable**.
-4. Go to **Settings → Local REST API** (under *Community plugins* in the sidebar) and **copy the API Key**.
+> The three pictures in this step and the next are drawn illustrations of Obsidian's settings, not captures of the app. Your screens may look slightly different depending on your Obsidian and plugin versions.
+
+1. Open Obsidian → **Settings** (⚙ bottom-left) → **Community plugins**. If prompted, click **Turn on community plugins**, then click **Browse**.
+
+   <img src="docs/images/obsidian-1-community-plugins.png" width="640" alt="Illustration: Obsidian Settings, Community plugins, with Turn on community plugins and Browse highlighted">
+
+2. Search for **Local REST API**, click **Install**, then **Enable**.
+
+   <img src="docs/images/obsidian-2-install-plugin.png" width="640" alt="Illustration: searching for Local REST API, with Install and Enable highlighted">
+
+3. Go to **Settings → Local REST API** (under *Community plugins* in the sidebar) and **copy the API Key**.
+
+   <img src="docs/images/obsidian-3-plugin-settings.png" width="640" alt="Illustration: Local REST API settings, with the API key and the HTTP server switch highlighted">
 
 Check it's running (replace `YOUR_KEY`):
 
@@ -178,7 +187,7 @@ Chrome rejects self-signed certificates just like curl does, so pick one:
 
 **Option A — HTTP (easiest, recommended)**
 
-1. In **Settings → Local REST API**, turn on **Enable Non-encrypted (HTTP) Server**.
+1. In **Settings → Local REST API**, turn on **Enable Non-encrypted (HTTP) Server** (marked **2** in the illustration above).
 2. Use API URL `http://127.0.0.1:27123` in the extension (the default).
 
 The HTTP server only listens on `127.0.0.1`, so it's not reachable from other machines.
@@ -300,6 +309,7 @@ Header buttons: **▯** open side panel · **↗** open the bookmarks note in Ob
 - **Stats:** a line above the list shows totals, how many are still to read, how many you saved this week, and your top sections and tags.
 - **Export:** download the current view as a bookmarks file any browser can import, or as a spreadsheet (.csv).
 - **Sort:** the second dropdown orders each section by note order, newest, oldest, title or domain.
+- <img src="docs/images/popup-bulk.png" width="520" alt="Three bookmarks selected with the bulk actions bar">
 - **Bulk actions:** click **Select** (or ⌘/Ctrl-click rows, or press `x`), then move, tag, mark read or delete everything selected. **Select all shown** picks the whole current view.
 - **Check links** tests the links in the current view (up to 200 at a time) and lists the ones that return 404/410 or don't answer. It asks for site access the first time, because checking a link means requesting it.
 - **Keyboard:** `/` filter · `↑` `↓` move · `Enter` open · `e` edit · `x` select · `p` pin · `Delete` remove.
@@ -324,6 +334,8 @@ Searches **all notes in your vault** (not just bookmarks) via the REST API, as y
 Click **▯** in the popup header (or right-click the toolbar icon → *Open Obsidian side panel*). The panel stays open while you browse and updates to whichever tab is active.
 
 ### Reminders
+
+<img src="docs/images/popup-reminders.png" width="520" alt="Reminders view with a due reminder at the top and the reminder bar open">
 
 - **Set one while saving** with *Remind me* on the Save tab, or **on any saved bookmark** with the ⏰ button on its row. The bar that opens lets you choose the date, time and repeat, or remove the reminder.
 - **Repeating reminders** come back every day, week or month until you remove them. If Chrome was closed when one was due, you get it once when Chrome starts, and the next one is scheduled from then.

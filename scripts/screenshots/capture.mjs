@@ -45,6 +45,11 @@ const SCENES = [
   { name: 'theme-sakura', page: 'popup', q: 'scene=browse&theme=sakura', size: [800, 600] },
   { name: 'theme-forest', page: 'popup', q: 'scene=browse&theme=forest', size: [800, 600] },
   { name: 'theme-coffee', page: 'popup', q: 'scene=browse&theme=coffee', size: [800, 600] },
+  { name: 'popup-reminders', page: 'popup', q: 'scene=reminders', size: [800, 470] },
+  { name: 'popup-bulk', page: 'popup', q: 'scene=bulk', size: [800, 560] },
+  { name: 'obsidian-1-community-plugins', url: '/scripts/screenshots/obsidian-mock.html?step=1', size: [900, 380] },
+  { name: 'obsidian-2-install-plugin', url: '/scripts/screenshots/obsidian-mock.html?step=2', size: [900, 400] },
+  { name: 'obsidian-3-plugin-settings', url: '/scripts/screenshots/obsidian-mock.html?step=3', size: [900, 430] },
   { name: 'popup-large', page: 'popup', q: 'scene=browse&big=5000', size: [800, 420] },
   { name: 'options', page: 'options', q: '', size: [900, 2200] },
 ];
@@ -92,7 +97,7 @@ const shoot = async (s) => {
     '--virtual-time-budget=5000',
     `--screenshot=${out}`,
     ...(s.dark ? ['--force-dark-mode', '--blink-settings=preferredColorScheme=0'] : ['--blink-settings=preferredColorScheme=1']),
-    `http://127.0.0.1:${PORT}/__shot/${s.page}.html?${s.q}`,
+    `http://127.0.0.1:${PORT}${s.url || `/__shot/${s.page}.html?${s.q}`}`,
   ];
   try {
     await run(CHROME, args, { timeout: 120000 });

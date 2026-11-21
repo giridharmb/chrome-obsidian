@@ -89,6 +89,19 @@ const page = {
   selection: params.get('sel') ?? 'Capture first, organize later: a single inbox note with sections beats a hundred scattered files.',
 };
 
+// The reminders scene shows two pending reminders and one that has come due.
+const day = 86400000;
+const extraStore =
+  params.get('scene') === 'reminders'
+    ? {
+        reminders: [
+          { url: 'https://arxiv.org/abs/1706.03762', title: 'Attention Is All You Need', at: Date.now() + 2 * day, repeat: 'weekly' },
+          { url: 'https://fortelabs.com/blog/how-to-take-smart-notes/', title: 'How to take smart notes', at: Date.now() + day, repeat: '' },
+        ],
+        fired: { 'https://www.youtube.com/watch?v=OUN8uyQ3dXw': 'Building a Second Brain in Obsidian' },
+      }
+    : {};
+
 const noop = () => {};
 const ev = { addListener: noop };
 window.chrome = {
@@ -101,7 +114,7 @@ window.chrome = {
     sendMessage: async (m) => ({ ok: true, data: handlers[m.type]?.(m) }),
     openOptionsPage: noop,
   },
-  storage: { local: { get: async () => ({ settings }), set: async () => {} }, onChanged: ev },
+  storage: { local: { get: async () => ({ settings, ...extraStore }), set: async () => {} }, onChanged: ev },
   tabs: { query: async () => [{ id: 1, title: page.title, url: page.url }], create: noop, onActivated: ev, onUpdated: ev },
   scripting: { executeScript: async () => [{ result: page }] },
   windows: { getCurrent: async () => ({ id: 1 }) },
@@ -142,6 +155,24 @@ window.addEventListener('load', () =>
       /* page URL already in the sample doc → duplicate banner shows automatically */
     }
     if (scene === 'browse') document.querySelector('[data-tab="browse"]').click();
+    const tool = (title, label) =>
+      [...[...document.querySelectorAll('#list .item')].find((n) => n.textContent.includes(title)).querySelectorAll('.tools button')].find((b) => b.textContent === label).click();
+    if (scene === 'reminders') {
+      document.querySelector('[data-tab="browse"]').click();
+      setTimeout(() => {
+        $('show').value = 'reminders';
+        $('show').dispatchEvent(new Event('change'));
+        tool('Attention', '⏰');
+        document.activeElement?.blur();
+      }, 300);
+    }
+    if (scene === 'bulk') {
+      document.querySelector('[data-tab="browse"]').click();
+      setTimeout(() => {
+        $('select-mode').click();
+        [...document.querySelectorAll('#list .item')].slice(0, 3).forEach((n) => n.click());
+      }, 300);
+    }
     if (scene === 'unread') {
       document.querySelector('[data-tab="browse"]').click();
       $('show').value = 'unread';
