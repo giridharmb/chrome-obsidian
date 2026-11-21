@@ -202,6 +202,16 @@ async function doSave(open) {
   const btns = [$('save'), $('save-open')];
   btns.forEach((b) => (b.disabled = true));
   try {
+    if (editing) {
+      const e = editing;
+      const item = { ...currentItem(), date: e.date, done: e.done, notePath: e.notePath };
+      await send('update', { url: e.url, file: e.file, section: e.section, item });
+      toast('Updated');
+      await stopEdit();
+      loadBookmarks();
+      document.querySelector('.tabs [data-tab="browse"]').click();
+      return;
+    }
     const r = await send('save', { item: currentItem(open) });
     if (r.queued) toast("Obsidian isn't running — queued, will save when it's back");
     else {
@@ -225,7 +235,7 @@ async function doSave(open) {
 }
 
 $('save').onclick = () => doSave(false);
-$('save-open').onclick = () => doSave(true);
+$('save-open').onclick = () => (editing ? stopEdit() : doSave(true));
 $('save-tabs').onclick = () =>
   send('saveTabs').then((r) => toast(`Saved ${r.count} tabs to ${r.category}`), (e) => toast(e.message, true));
 for (const id of ['title', 'tags', 'note']) $(id).addEventListener('input', updatePreview);
@@ -240,7 +250,7 @@ document.addEventListener('keydown', (e) => {
 
 function showDuplicate() {
   const box = $('dupe');
-  const hit = page.url && data.entries.find((e) => canonUrl(e.url) === canonUrl(page.url));
+  const hit = !editing && page.url && data.entries.find((e) => canonUrl(e.url) === canonUrl(page.url));
   box.hidden = !hit;
   if (!hit) return;
   const state = hit.done === false ? ' · unread' : hit.done ? ' · read' : '';
@@ -320,9 +330,63 @@ function renderList() {
   for (const [section, entries] of groups.values()) {
     const h = el('div', { className: 'group-h' }, el('span', { textContent: section }), el('span', { textContent: entries.length }));
     h.onclick = () => h.classList.toggle('collapsed');
-    out.push(h, el('div', { className: 'group' }, ...entries.map(renderItem)));
+    const g = el('div', { className: 'group' }, ...entries.map(renderItem));
+    // Drop a dragged bookmark on a section (its header or its list) to move it there.
+    for (const zone of [h, g]) {
+      zone.ondragover = (ev) => {
+        if (!dragged || norm(dragged.section) === norm(section)) return;
+        ev.preventDefault();
+        h.classList.add('drop');
+      };
+      zone.ondragleave = () => h.classList.remove('drop');
+      zone.ondrop = (ev) => {
+        ev.preventDefault();
+        h.classList.remove('drop');
+        const e = dragged;
+        send('move', { url: e.url, file: e.file, section: e.section, to: section }).then(
+          () => (toast(`Moved to ${section}`), loadBookmarks()),
+          (err) => toast(err.message, true)
+        );
+      };
+    }
+    out.push(h, g);
   }
   list.replaceChildren(...out);
+}
+
+let dragged = null; // bookmark being dragged between sections
+let editing = null; // bookmark loaded into the Save tab for editing
+
+function startEdit(e) {
+  editing = e;
+  page = { url: e.url, title: e.title, selection: '', description: '', image: '' };
+  const prefix = `#${(S.tagPrefix || '').toLowerCase()}/`;
+  $('title').value = e.title;
+  $('url').textContent = e.url;
+  $('fav').src = favicon(e.url);
+  $('tags').value = e.tags.filter((t) => !(S.tagPrefix && t.toLowerCase().startsWith(prefix))).map((t) => t.slice(1)).join(' ');
+  $('note').value = e.note;
+  $('readlater').checked = e.done !== null;
+  $('dedicated').checked = false;
+  $('sel-wrap').hidden = true;
+  category = e.section;
+  $('save').firstChild.textContent = 'Update ';
+  $('save-open').textContent = 'Cancel';
+  $('save').disabled = $('save-open').disabled = false;
+  for (const id of ['dedicated', 'save-tabs']) $(id).closest('label, button').hidden = true;
+  document.querySelector('.tabs [data-tab="save"]').click();
+  renderCats();
+  renderTagSuggestions();
+  showDuplicate();
+  updatePreview();
+}
+
+function stopEdit() {
+  editing = null;
+  $('save').firstChild.textContent = 'Save ';
+  $('save-open').textContent = 'Save & open in Obsidian';
+  for (const id of ['dedicated', 'save-tabs']) $(id).closest('label, button').hidden = false;
+  return loadPage();
 }
 
 function renderItem(e) {
@@ -353,6 +417,7 @@ function renderItem(e) {
     { className: 'tools' },
     e.notePath ? el('button', { textContent: 'Note', title: 'Open its note in Obsidian', onclick: () => send('open', { path: `${e.notePath}.md` }) }) : null,
     e.notePath ? el('button', { textContent: 'View', title: 'Preview note here', onclick: () => viewNote(`${e.notePath}.md`) }) : null,
+    el('button', { textContent: 'Edit', title: 'Edit title, section, tags and note', onclick: () => startEdit(e) }),
     el('button', {
       textContent: '✕',
       title: 'Delete this bookmark',
@@ -361,7 +426,16 @@ function renderItem(e) {
   );
   return el(
     'div',
-    { className: `item${e.done ? ' done' : ''}` },
+    {
+      className: `item${e.done ? ' done' : ''}`,
+      draggable: true,
+      ondragstart: (ev) => {
+        dragged = e;
+        ev.dataTransfer.effectAllowed = 'move';
+        ev.dataTransfer.setData('text/plain', e.url);
+      },
+      ondragend: () => (dragged = null),
+    },
     box || el('img', { className: 'fav', src: favicon(e.url), alt: '' }),
     el('div', { className: 'body' }, el('a', { className: 't', textContent: e.title || e.url, title: e.url, onclick: () => openTab(e.url) }), meta),
     tools

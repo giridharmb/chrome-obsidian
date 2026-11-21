@@ -13,6 +13,9 @@ import {
   parseBookmarks,
   toggleEntry,
   removeEntry,
+  takeEntry,
+  categoryTag,
+  norm,
   shrinkSections,
   cleanUrl,
   fmtTime,
@@ -248,6 +251,60 @@ export async function toggleRead(s, url, file) {
 /** Removes the list entry only; a dedicated note or downloaded image stays in the vault. */
 export async function removeBookmark(s, url, file) {
   if (!(await editNote(s, file || s.bookmarksFile, (cur) => cur && removeEntry(cur, url)))) throw new ObsidianError('Bookmark not found in the note.', 0);
+}
+
+/**
+ * Moves an entry to section `to` (drag and drop). With `line`, also replaces its first line (edit);
+ * indented children such as the highlight quote always travel with it.
+ */
+export async function moveBookmark(s, { url, file, section, to, line }) {
+  requireRest(s);
+  const from = file || s.bookmarksFile;
+  const target = fileFor(s, to);
+  const [oldTag, newTag] = [categoryTag(s, section || ''), categoryTag(s, to)];
+  const redo = (block) => {
+    const [first, ...rest] = block.split('\n');
+    const retagged = first.split(' ').map((w) => (oldTag && w === oldTag ? newTag : w)).join(' ');
+    return [line ?? retagged, ...rest].join('\n');
+  };
+  const place = (cur, block) =>
+    insertUnderHeading(shrinkSections(cur ?? '', s.categories), to, block, { newestFirst: s.newestFirst }).replace(/^\n+/, '');
+  const missing = new ObsidianError('Bookmark not found in the note.', 0);
+
+  if (target === from) {
+    const ok = await editNote(s, from, (cur) => {
+      const t = cur && takeEntry(cur, url);
+      if (!t) return null;
+      if (norm(section) !== norm(to)) return place(t.content, redo(t.block));
+      const lines = t.content.split('\n'); // same section: keep its position
+      lines.splice(t.index, 0, redo(t.block));
+      return lines.join('\n');
+    });
+    if (!ok) throw missing;
+    return;
+  }
+  const t = takeEntry((await client(s).read(from)) || '', url);
+  if (!t) throw missing;
+  // Add before removing: if the second write fails you get a duplicate, never a lost bookmark.
+  await editNote(s, target, (cur) => place(cur, redo(t.block)));
+  await editNote(s, from, (cur) => cur && removeEntry(cur, url));
+}
+
+/** Rewrites an entry from the popup's edit form. */
+export function updateBookmark(s, { url, file, section, item }) {
+  const to = resolveCategory(item.category, s.categories);
+  let line = renderEntry(s, {
+    title: item.title,
+    url: cleanUrl(item.url),
+    category: to,
+    tags: item.tags || [],
+    note: item.note,
+    readLater: item.readLater,
+    clipPath: item.notePath ? `${item.notePath}.md` : null,
+    date: item.date || undefined,
+  });
+  if (item.done) line = line.replace('- [ ] ', '- [x] ');
+  return moveBookmark(s, { url, file, section, to, line });
 }
 
 export async function searchVault(s, query) {

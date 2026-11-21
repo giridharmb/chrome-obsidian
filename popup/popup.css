@@ -203,5 +203,7 @@ blockquote {
 .item .tag, .md .md-tag { cursor: pointer; }
 .item .tag:hover { text-decoration: underline; }
 .chip i { font-style: normal; opacity: .6; margin-left: 3px; }
+.item[draggable] { cursor: grab; }
+.group-h.drop { color: var(--accent); background: var(--accent-soft); border-radius: 6px; outline: 2px dashed var(--accent); }
 #toast a { color: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; }
 #toast.err { background: var(--err); color: #fff; }

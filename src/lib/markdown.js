@@ -336,15 +336,18 @@ export function toggleEntry(content, url) {
 }
 
 /** Remove the first entry with this URL, plus its indented children (highlight quote). Null if not found. */
-export function removeEntry(content, url) {
+export const removeEntry = (content, url) => takeEntry(content, url)?.content ?? null;
+
+/** Cuts that entry out: { content: note without it, block: its lines, index: line it started on }. */
+export function takeEntry(content, url) {
   const lines = content.split('\n');
   const target = canonUrl(url);
   const i = lines.findIndex((l) => /^[-*+]\s/.test(l) && [...l.matchAll(/\]\(([^)\s]+)\)/g)].some((x) => canonUrl(x[1]) === target));
   if (i === -1) return null;
   let n = 1;
   while (i + n < lines.length && /^\s+\S/.test(lines[i + n])) n++;
-  lines.splice(i, n);
-  return lines.join('\n');
+  const block = lines.splice(i, n).join('\n');
+  return { content: lines.join('\n'), block, index: i };
 }
 
 /* ---------- Tiny, safe markdown → HTML renderer for previews ---------- */

@@ -286,6 +286,8 @@ Header buttons: **▯** open side panel · **↗** open the bookmarks note in Ob
 - Grouped by section (click a section header to collapse it).
 - Filter by several words at once (title, domain, note, `#tag`); switch between **All / Read later / Done**.
 - Click a tag chip at the top, or a tag on any entry, to filter by it. Click again to clear it.
+- **Drag** a bookmark onto another section (its header or its list) to move it there. Its section tag is updated and any highlight quote moves with it.
+- Hover an entry and click **Edit** to change its title, section, tags or note in the Save tab, then **Update** (or **Cancel**).
 - Tick the checkbox to mark as read — it updates `- [ ]` → `- [x]` in Obsidian.
 - Click a title to open the page. Entries with a dedicated note show **Note** (open in Obsidian) and **View** (preview here) on hover.
 

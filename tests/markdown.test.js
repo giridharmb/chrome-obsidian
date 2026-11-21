@@ -52,3 +52,10 @@ console.log('ALL OK');
   assert.ok(m.insertUnderHeading(m.newBookmarksFile(s), 'Brand new', '- x').includes('\n### Brand new\n'));
   console.log('shrinkSections OK');
 }
+{
+  const d = '### Dev\n\n- [A](https://a.com)\n\t> quote\n- [B](https://b.com)\n';
+  const t = m.takeEntry(d, 'https://a.com');
+  assert.deepEqual(t, { content: '### Dev\n\n- [B](https://b.com)\n', block: '- [A](https://a.com)\n\t> quote', index: 2 });
+  assert.equal(m.takeEntry(d, 'https://x.com'), null);
+  console.log('takeEntry OK');
+}

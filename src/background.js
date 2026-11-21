@@ -147,6 +147,8 @@ const handlers = {
   status: (s) => core.status(s),
   bookmarks: (s) => core.getBookmarks(s),
   tags: (s) => core.client(s).tags().catch(() => []), // older plugins: fall back to bookmark tags only
+  move: (s, m) => core.moveBookmark(s, m),
+  update: (s, m) => core.updateBookmark(s, m).finally(markActive),
   toggleRead: (s, m) => core.toggleRead(s, m.url, m.file),
   search: (s, m) => core.searchVault(s, m.query),
   readNote: (s, m) => core.readNote(s, m.path),
