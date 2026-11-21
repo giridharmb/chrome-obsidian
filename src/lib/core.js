@@ -206,7 +206,7 @@ export async function flushQueue(s) {
 export async function saveTabs(s, tabs) {
   const pages = tabs.filter((t) => /^https?:/.test(t.url || ''));
   if (!pages.length) throw new ObsidianError('No web pages open in this window.', 0);
-  const section = `🗂 Session ${fmtDate()} ${fmtTime()}`;
+  const section = `Session ${fmtDate()} ${fmtTime()}`;
   const block = pages
     .map((t) => renderEntry(s, { title: t.title, url: cleanUrl(t.url), category: 'Session', tags: [], readLater: s.readLater }))
     .join('\n');

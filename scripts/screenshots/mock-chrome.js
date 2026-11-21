@@ -7,14 +7,14 @@ const params = new URLSearchParams(location.search);
 const settings = { ...DEFAULTS, apiKey: 'demo-key', vaultName: 'My Vault', apiUrl: 'https://127.0.0.1:27124' };
 
 const samples = [
-  ['💻 Dev', 'coddingtonbear/obsidian-local-rest-api', 'https://github.com/coddingtonbear/obsidian-local-rest-api', ['obsidian', 'api'], 'powers this extension', true],
-  ['💻 Dev', 'Vite — Getting Started', 'https://vitejs.dev/guide/', ['frontend'], '', false],
-  ['💻 Dev', 'Chrome Extensions: Manifest V3', 'https://developer.chrome.com/docs/extensions/develop/migrate/what-is-mv3', ['chrome'], '', true],
-  ['📚 Reading', 'How to take smart notes', 'https://fortelabs.com/blog/how-to-take-smart-notes/', ['pkm', 'zettelkasten'], 'great intro to Zettelkasten', true],
-  ['📚 Reading', 'The Pragmatic Engineer — On writing', 'https://blog.pragmaticengineer.com/writing/', ['writing'], '', false],
-  ['🎥 Videos', 'Building a Second Brain in Obsidian', 'https://www.youtube.com/watch?v=OUN8uyQ3dXw', ['pkm'], '', true],
-  ['🧪 Research', 'Attention Is All You Need', 'https://arxiv.org/abs/1706.03762', ['ml', 'transformers'], 'the original transformer paper', true],
-  ['🛠 Tools', 'Excalidraw', 'https://excalidraw.com/', ['diagrams'], '', false],
+  ['Dev', 'coddingtonbear/obsidian-local-rest-api', 'https://github.com/coddingtonbear/obsidian-local-rest-api', ['obsidian', 'api'], 'powers this extension', true],
+  ['Dev', 'Vite — Getting Started', 'https://vitejs.dev/guide/', ['frontend'], '', false],
+  ['Dev', 'Chrome Extensions: Manifest V3', 'https://developer.chrome.com/docs/extensions/develop/migrate/what-is-mv3', ['chrome'], '', true],
+  ['Reading', 'How to take smart notes', 'https://fortelabs.com/blog/how-to-take-smart-notes/', ['pkm', 'zettelkasten'], 'great intro to Zettelkasten', true],
+  ['Reading', 'The Pragmatic Engineer — On writing', 'https://blog.pragmaticengineer.com/writing/', ['writing'], '', false],
+  ['Videos', 'Building a Second Brain in Obsidian', 'https://www.youtube.com/watch?v=OUN8uyQ3dXw', ['pkm'], '', true],
+  ['Research', 'Attention Is All You Need', 'https://arxiv.org/abs/1706.03762', ['ml', 'transformers'], 'the original transformer paper', true],
+  ['Tools', 'Excalidraw', 'https://excalidraw.com/', ['diagrams'], '', false],
 ];
 let doc = newBookmarksFile(settings);
 for (const [cat, title, url, tags, note, readLater] of samples.reverse()) {
@@ -26,7 +26,7 @@ const NOTE = `---
 title: "Attention Is All You Need"
 source: "https://arxiv.org/abs/1706.03762"
 domain: "arxiv.org"
-category: "🧪 Research"
+category: "Research"
 tags:
   - bookmark/research
   - ml

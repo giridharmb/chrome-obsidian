@@ -55,16 +55,16 @@ Manifest V3 · No build step · No external servers · Works with the Obsidian *
 | 🔖 **One-click save** | Popup with editable title, section picker, tags (with suggestions from your existing tags), a note, and the text you highlighted on the page. |
 | ⚡ **Silent quick-save** | `Alt+Shift+B` saves the current page without opening anything. A ✓ badge confirms it. |
 | 🖱 **Right-click menu** | Save page · link · image · highlight — or send it straight to a specific section. |
-| 🗂 **Auto-sorting** | Domain rules route pages to sections automatically (`github.com → Dev`, `youtube.com → Videos`, …). |
+| **Auto-sorting** | Domain rules route pages to sections automatically (`github.com → Dev`, `youtube.com → Videos`, …). |
 | 📖 **Read-later checklist** | Entries can be `- [ ]` tasks. Tick them off in Obsidian **or** from the extension. |
 | 📝 **Dedicated notes** | Optionally create a full note per bookmark with frontmatter, highlights and notes, linked from the hub note. |
-| 🖼 **Images** | Embed by URL, or download into your vault's attachments folder. |
+| **Images** | Embed by URL, or download into your vault's attachments folder. |
 | 🔁 **Duplicate detection** | The popup tells you if (and where) a page is already saved, and the toolbar icon shows a **★** on saved pages. |
 | 📴 **Offline queue** | If Obsidian is closed, saves are kept and written automatically (checked every minute) once it's back. |
 | 🧹 **Clean URLs** | Tracking parameters (`utm_*`, `fbclid`, `gclid`, …) are stripped before saving and ignored when checking duplicates. |
 | ↩️ **Undo & delete** | *Undo* right after saving, or delete any entry from the Bookmarks tab. |
 | ⌨️ **Address-bar search** | Type `ob`, press Tab or Space, then a few words to find a saved bookmark. |
-| 🗂 **Save all tabs** | Saves every tab in the window under one dated *Session* section. |
+| **Save all tabs** | Saves every tab in the window under one dated *Session* section. |
 | 📅 **Daily note** | Optionally also logs each save in today's daily note. |
 | 📂 **One note per section** | Optionally keeps each section in its own note (`Bookmarks/Dev.md`, …) instead of one big note. |
 | 🔎 **Browse & search** | List all bookmarks by section, filter them, search the whole vault and preview notes — inside Chrome. |
@@ -84,26 +84,26 @@ tags:
 ---
 # 🔖 Bookmarks
 
-### 📥 Inbox
+### Inbox
 
-### 💻 Dev
+### Dev
 - [ ] [obsidian-local-rest-api](https://github.com/coddingtonbear/obsidian-local-rest-api) #bookmark/dev #obsidian #api · github.com · 2026-10-09 — powers this extension
 - [Vite — Getting Started](https://vitejs.dev/guide/) #bookmark/dev #frontend · vitejs.dev · 2026-10-09
 
-### 📚 Reading
+### Reading
 - [ ] [How to take smart notes](https://fortelabs.com/blog/how-to-take-smart-notes/) #bookmark/reading #pkm · fortelabs.com · 2026-10-09
 	> Capture first, organize later: a single inbox note with sections beats a hundred scattered files.
 
-### 🧪 Research
+### Research
 - [ ] [[Bookmarks/Clippings/Attention Is All You Need|Attention Is All You Need]] [↗](https://arxiv.org/abs/1706.03762) #bookmark/research #ml · arxiv.org · 2026-10-09
 
-### 🖼 Images
+### Images
 - ![[Bookmarks/Attachments/2026-10-09-diagram-12345.png|300]] from [Some article](https://example.com/post) #bookmark/images · 2026-10-09
 ```
 
 | Concept | How it works |
 |---|---|
-| **Sections = categories** | Picked automatically by [auto-sort rules](#settings-reference), overridable in the popup. Create new sections on the fly with **+ New**. Matching ignores emoji and case, so `Dev` matches `### 💻 Dev` — rename/decorate headings in Obsidian freely. |
+| **Sections = categories** | Picked automatically by [auto-sort rules](#settings-reference), overridable in the popup. Create new sections on the fly with **+ New**. Matching ignores case and any emoji you add, so `dev` matches `### Dev`. |
 | **Tags** | Every entry gets `#bookmark/<section>` plus your own tags. Obsidian's tag pane nests them; search `tag:#bookmark/dev` anywhere. |
 | **Read later** | `- [ ]` = unread, `- [x]` = done. Shows up in Obsidian's task queries. |
 | **Highlights** | Selected text is saved as an indented quote under the entry. |
@@ -118,7 +118,7 @@ tags:
 title: "Attention Is All You Need"
 source: "https://arxiv.org/abs/1706.03762"
 domain: "arxiv.org"
-category: "🧪 Research"
+category: "Research"
 tags:
   - bookmark/research
   - ml
@@ -340,10 +340,10 @@ Type `ob` in the address bar, press **Tab** (or Space), then type words from a t
 | Dedicated notes folder | `Bookmarks/Clippings` | For "Create its own note" |
 | Image attachments folder | `Bookmarks/Attachments` | For downloaded images |
 | Tag prefix | `bookmark` | Section tag becomes `#bookmark/<section>`; leave empty for `#<section>` |
-| Sections | Inbox, Dev, Reading, Videos, Research, Tools, Shopping, Images | One per line, emoji welcome. Order = order in a new note. |
+| Sections | Inbox, Dev, Reading, Videos, Research, Tools, Shopping, Images | One per line. Order = order in a new note. |
 | Auto-sort rules | `github.com = Dev`, `youtube.com = Videos`, … | `pattern = Section`. Pattern matches part of the hostname; if it contains `/` it's matched against the full URL. First match wins. |
-| Default section | 📥 Inbox | When no rule matches |
-| Images section | 🖼 Images | Where images go |
+| Default section | Inbox | When no rule matches |
+| Images section | Images | Where images go |
 | Template | `- {{checkbox}}{{link}} {{tags}} · {{domain}} · {{date}}{{note}}` | Placeholders: `{{checkbox}} {{link}} {{title}} {{url}} {{domain}} {{date}} {{time}} {{tags}} {{note}} {{category}}` |
 | Add section tag | on | Adds `#bookmark/<section>` |
 | Read later on by default | on | Pre-ticks *Read later* in the popup and for quick-saves |
@@ -401,12 +401,12 @@ npm test
 | # | Test | Expected |
 |---|---|---|
 | 1 | Settings → **Test connection** | Green "Connected · …" |
-| 2 | Popup on a GitHub page → **Save** | Entry under `### 💻 Dev` in `Bookmarks/Bookmarks.md` |
-| 3 | Open the popup on the same page again | Yellow "Already saved in 💻 Dev…" |
-| 4 | `Alt+Shift+B` on a YouTube video | ✓ badge, entry under 🎥 Videos |
+| 2 | Popup on a GitHub page → **Save** | Entry under `### Dev` in `Bookmarks/Bookmarks.md` |
+| 3 | Open the popup on the same page again | Yellow "Already saved in Dev…" |
+| 4 | `Alt+Shift+B` on a YouTube video | ✓ badge, entry under Videos |
 | 5 | Select text → right-click → **Save highlight** | Entry with an indented `> quote` |
-| 6 | Right-click a link → **…section ▸ Reading** | Uses link text as title, under 📚 Reading |
-| 7 | Right-click an image → **Save image** | Embedded under 🖼 Images |
+| 6 | Right-click a link → **…section ▸ Reading** | Uses link text as title, under Reading |
+| 7 | Right-click an image → **Save image** | Embedded under Images |
 | 8 | Popup → tick **Create its own note** → Save | New note in `Bookmarks/Clippings/`, linked from the hub |
 | 9 | **Bookmarks** tab → tick a checkbox | `- [ ]` becomes `- [x]` in Obsidian |
 | 10 | **Search vault** → search a word → click result | Note preview + *Open in Obsidian* works |

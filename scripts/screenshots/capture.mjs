@@ -23,13 +23,13 @@ const CHROME =
       : 'google-chrome');
 
 const SCENES = [
-  { name: 'popup-save', page: 'popup', q: 'scene=save&tall=1', size: [400, 880] },
-  { name: 'popup-save-dark', page: 'popup', q: 'scene=save&tall=1', size: [400, 880], dark: true },
-  { name: 'popup-duplicate', page: 'popup', q: `scene=dupe&sel=&title=coddingtonbear/obsidian-local-rest-api&url=${encodeURIComponent('https://github.com/coddingtonbear/obsidian-local-rest-api')}`, size: [400, 420] },
-  { name: 'popup-bookmarks', page: 'popup', q: 'scene=browse', size: [400, 600] },
-  { name: 'popup-unread', page: 'popup', q: 'scene=unread', size: [400, 480] },
-  { name: 'popup-search', page: 'popup', q: 'scene=search', size: [400, 380] },
-  { name: 'popup-note', page: 'popup', q: 'scene=note', size: [400, 600] },
+  { name: 'popup-save', page: 'popup', q: 'scene=save&tall=1', size: [480, 880] },
+  { name: 'popup-save-dark', page: 'popup', q: 'scene=save&tall=1', size: [480, 880], dark: true },
+  { name: 'popup-duplicate', page: 'popup', q: `scene=dupe&sel=&title=coddingtonbear/obsidian-local-rest-api&url=${encodeURIComponent('https://github.com/coddingtonbear/obsidian-local-rest-api')}`, size: [480, 420] },
+  { name: 'popup-bookmarks', page: 'popup', q: 'scene=browse', size: [480, 600] },
+  { name: 'popup-unread', page: 'popup', q: 'scene=unread', size: [480, 480] },
+  { name: 'popup-search', page: 'popup', q: 'scene=search', size: [480, 380] },
+  { name: 'popup-note', page: 'popup', q: 'scene=note', size: [480, 600] },
   { name: 'side-panel', page: 'popup', q: 'scene=browse&panel=1', size: [460, 700] },
   { name: 'options', page: 'options', q: '', size: [900, 1660] },
 ];

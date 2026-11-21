@@ -21,8 +21,8 @@ assert.equal(entries.find(e => e.url === 'https://github.com/a/b').title, 'Repo 
 assert.equal(entries.find(e => e.title === 'Clip').notePath, 'Bookmarks/Clippings/Clip');
 const t = m.toggleEntry(doc, 'https://github.com/a/b/');
 assert.ok(t.includes('- [x] [Repo'));
-assert.equal(m.categorize('https://www.youtube.com/watch?v=1', s), '🎥 Videos');
-assert.equal(m.categorize('https://example.com', s), '📥 Inbox');
+assert.equal(m.categorize('https://www.youtube.com/watch?v=1', s), 'Videos');
+assert.equal(m.categorize('https://example.com', s), 'Inbox');
 console.log(m.renderClipping(s, { title: 'T "q"', url: 'https://a.b/c', category: '💻 Dev', tags: ['x'], description: 'desc', selection: 'hi', note: 'n', readLater: true }));
 console.log(m.renderMarkdown('# H\n- [ ] [a](javascript:alert(1)) #tag <b>x</b>\n> [!info] hello **b**'));
 console.log('ALL OK');
@@ -47,7 +47,8 @@ console.log('ALL OK');
 }
 {
   const old = '# T\n\n## 💻 Dev\n\n- a\n\n## My own heading\n\n## 🗂 Session 2026-11-11 10:00\n';
-  assert.equal(m.shrinkSections(old, ['Dev']), '# T\n\n### 💻 Dev\n\n- a\n\n## My own heading\n\n### 🗂 Session 2026-11-11 10:00\n');
+  assert.equal(m.shrinkSections(old, ['Dev']), '# T\n\n### Dev\n\n- a\n\n## My own heading\n\n### Session 2026-11-11 10:00\n');
+  assert.equal(m.shrinkSections('### 💻 Dev\n### 🎯 Mine\n', ['Dev', '🎯 Mine']), '### Dev\n### 🎯 Mine\n');
   assert.ok(m.insertUnderHeading(m.newBookmarksFile(s), 'Brand new', '- x').includes('\n### Brand new\n'));
   console.log('shrinkSections OK');
 }

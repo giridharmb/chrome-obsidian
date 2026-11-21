@@ -1,7 +1,7 @@
 import { getSettings } from './lib/settings.js';
 import { getPageInfo, getLinkText } from './lib/page.js';
 import * as core from './lib/core.js';
-import { canonUrl } from './lib/markdown.js';
+import { canonUrl, stripIcon } from './lib/markdown.js';
 
 /* ---------------- Context menus ---------------- */
 
@@ -25,6 +25,13 @@ async function buildMenus() {
 }
 
 chrome.runtime.onInstalled.addListener(async ({ reason }) => {
+  // Sections no longer carry icons; update settings saved by an older version.
+  const { settings } = await chrome.storage.local.get('settings');
+  if (settings?.categories) {
+    settings.categories = settings.categories.map(stripIcon);
+    for (const k of ['defaultCategory', 'imageCategory']) if (settings[k]) settings[k] = stripIcon(settings[k]);
+    await chrome.storage.local.set({ settings });
+  }
   await buildMenus();
   if (reason === 'install') chrome.runtime.openOptionsPage();
 });

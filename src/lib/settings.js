@@ -14,17 +14,17 @@ export const DEFAULTS = {
   attachmentsFolder: 'Bookmarks/Attachments',
 
   categories: [
-    '📥 Inbox',
-    '💻 Dev',
-    '📚 Reading',
-    '🎥 Videos',
-    '🧪 Research',
-    '🛠 Tools',
-    '🛒 Shopping',
-    '🖼 Images',
+    'Inbox',
+    'Dev',
+    'Reading',
+    'Videos',
+    'Research',
+    'Tools',
+    'Shopping',
+    'Images',
   ],
-  defaultCategory: '📥 Inbox',
-  imageCategory: '🖼 Images',
+  defaultCategory: 'Inbox',
+  imageCategory: 'Images',
 
   // "pattern = Category". Pattern matches the hostname (substring) or, if it has a "/", the full URL.
   domainRules: [

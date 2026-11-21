@@ -254,10 +254,16 @@ export function insertUnderHeading(content, heading, block, { newestFirst = true
   return [...lines.slice(0, start + 1), '', ...newBody, '', ...lines.slice(end)].join('\n');
 }
 
-/** Section headings used to be H2; shrink those (and only those) to H3 so old notes match new ones. */
+/** Drops the icons the default sections used to carry ("💻 Dev" → "Dev"). Other emoji are left alone. */
+export const stripIcon = (name) => name.replace(/^(📥|💻|📚|🎥|🧪|🛠|🛒|🖼|🗂)\uFE0F? /u, '');
+
+/** Brings section headings written by older versions (H2, with icons) in line with the current plain H3 style. */
 export function shrinkSections(content, categories) {
   const known = new Set(categories.map(norm));
-  return content.replace(/^## (.+)$/gm, (line, text) => (known.has(norm(text)) || text.startsWith('🗂 Session ') ? `### ${text}` : line));
+  return content.replace(/^###? (.+)$/gm, (line, text) => {
+    const t = stripIcon(text);
+    return known.has(norm(t)) || /^Session \d/.test(t) ? `### ${t}` : line;
+  });
 }
 
 const LIST_ITEM = /^([-*+])\s+(?:\[([ xX])\]\s+)?(.*)$/;
