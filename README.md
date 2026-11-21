@@ -258,6 +258,8 @@ If the page is already saved, you'll see where:
 
 <img src="docs/images/popup-duplicate.png" width="300" alt="Duplicate warning">
 
+A link can live in more than one section. The notice names every section that holds it, those sections get a **✓** on their chips, and each copy is highlighted in the Bookmarks tab.
+
 Header buttons: **▯** open side panel · **↗** open the bookmarks note in Obsidian · **⚙** settings. The dot next to the title is the connection status (green = connected; hover for details).
 
 ### Quick-save shortcut
@@ -284,6 +286,9 @@ Header buttons: **▯** open side panel · **↗** open the bookmarks note in Ob
 </p>
 
 - Grouped by section (click a section header to collapse it).
+- Built for large collections: with more than 200 bookmarks, sections start folded with their counts, and each section shows 50 entries at a time with a **Show more** button. Filtering searches everything, not only what is on screen.
+
+<img src="docs/images/popup-large.png" width="420" alt="5,000 bookmarks, sections folded">
 - Filter by several words at once (title, domain, note, `#tag`); switch between **All / Read later / Done**.
 - Click a tag chip at the top, or a tag on any entry, to filter by it. Click again to clear it.
 - **Drag** a bookmark onto another section (its header or its list) to move it there. Its section tag is updated and any highlight quote moves with it.

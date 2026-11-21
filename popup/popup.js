@@ -82,15 +82,25 @@ $('btn-panel').onclick = () => {
 
 /* ---------------- Save tab ---------------- */
 
+/** Matcher for entries that are the page currently open. */
+const isCurrent = () => {
+  const u = page.url ? canonUrl(page.url) : null;
+  return (e) => u !== null && canonUrl(e.url) === u;
+};
+
 function renderCats() {
   const cats = [...S.categories];
   for (const s of data.sections) if (!cats.some((c) => norm(c) === norm(s))) cats.push(s);
   const box = $('cats');
+  // Sections that already hold this page get a ✓ so you can see where it lives.
+  const here = isCurrent();
+  const savedIn = new Set(editing ? [] : data.entries.filter(here).map((e) => norm(e.section)));
   box.replaceChildren(
     ...cats.map((c) =>
       el('button', {
-        className: `chip${norm(c) === norm(category) ? ' selected' : ''}`,
-        textContent: c,
+        className: `chip${norm(c) === norm(category) ? ' selected' : ''}${savedIn.has(norm(c)) ? ' saved' : ''}`,
+        textContent: savedIn.has(norm(c)) ? `✓ ${c}` : c,
+        title: savedIn.has(norm(c)) ? 'This page is already saved here' : '',
         onclick: () => {
           category = c;
           renderCats();
@@ -254,15 +264,21 @@ document.addEventListener('keydown', (e) => {
 
 function showDuplicate() {
   const box = $('dupe');
-  const hit = !editing && page.url && data.entries.find((e) => canonUrl(e.url) === canonUrl(page.url));
-  box.hidden = !hit;
-  if (!hit) return;
-  const state = hit.done === false ? ' · unread' : hit.done ? ' · read' : '';
+  const hits = editing || !page.url ? [] : data.entries.filter((e) => canonUrl(e.url) === canonUrl(page.url));
+  box.hidden = !hits.length;
+  if (!hits.length) return;
+  // The same link can sit in several sections; name every one.
+  const parts = hits.flatMap((h, i) => [
+    i ? (i === hits.length - 1 ? ' and ' : ', ') : '',
+    el('b', { textContent: h.section || 'bookmarks' }),
+    `${h.date ? ` on ${h.date}` : ''}${h.done === false ? ' · unread' : h.done ? ' · read' : ''}`,
+  ]);
+  const hit = hits[0];
   box.replaceChildren(
-    `Already saved in `,
-    el('b', { textContent: hit.section || 'bookmarks' }),
-    `${hit.date ? ` on ${hit.date}` : ''}${state}. `,
-    el('a', { textContent: 'Open in Obsidian', onclick: () => send('open', { path: hit.notePath ? `${hit.notePath}.md` : undefined }) })
+    'Already saved in ',
+    ...parts,
+    '. ',
+    el('a', { textContent: 'Open in Obsidian', onclick: () => send('open', { path: hit.notePath ? `${hit.notePath}.md` : hit.file }) })
   );
 }
 
@@ -299,6 +315,9 @@ function toggleFilter(word) {
   renderList();
 }
 
+const limits = new Map(); // section → how many entries are shown
+const opened = new Set(); // sections unfolded by hand in a large collection
+
 function renderTagCloud(words) {
   const top = [...bookmarkTagCounts().entries()].sort((a, b) => b[1] - a[1]).slice(0, 14);
   $('tag-cloud').replaceChildren(
@@ -331,10 +350,24 @@ function renderList() {
   if (!f && show === 'all') [...S.categories, ...data.sections].forEach(group);
   for (const e of items) group(e.section || 'Unsorted')[1].push(e);
   const out = [];
+  // Large collections: sections start folded, and each shows 50 entries at a time, so the popup stays fast.
+  const big = data.entries.length > 200 && !f && show === 'all';
   for (const [section, entries] of groups.values()) {
+    const key = norm(section);
+    const limit = limits.get(key) || 50;
     const h = el('div', { className: 'group-h' }, el('span', { textContent: section }), el('span', { textContent: entries.length }));
-    h.onclick = () => h.classList.toggle('collapsed');
-    const g = el('div', { className: 'group' }, ...entries.map(renderItem));
+    if (big && !opened.has(key)) h.classList.add('collapsed');
+    h.onclick = () => (h.classList.toggle('collapsed') ? opened.delete(key) : opened.add(key));
+    const rest = entries.length - limit;
+    const more =
+      rest > 0
+        ? el('button', {
+            className: 'small more',
+            textContent: `Show ${Math.min(100, rest)} more (${rest} hidden)`,
+            onclick: () => (limits.set(key, limit + 100), renderList()),
+          })
+        : null;
+    const g = el('div', { className: 'group' }, ...entries.slice(0, limit).map(renderItem), more);
     // Drop a dragged bookmark on a section (its header or its list) to move it there.
     for (const zone of [h, g]) {
       zone.ondragover = (ev) => {
@@ -431,7 +464,7 @@ function renderItem(e) {
   return el(
     'div',
     {
-      className: `item${e.done ? ' done' : ''}`,
+      className: `item${e.done ? ' done' : ''}${!editing && isCurrent()(e) ? ' current' : ''}`,
       draggable: true,
       ondragstart: (ev) => {
         dragged = e;
@@ -440,13 +473,13 @@ function renderItem(e) {
       },
       ondragend: () => (dragged = null),
     },
-    box || el('img', { className: 'fav', src: favicon(e.url), alt: '' }),
+    box || el('img', { className: 'fav', src: favicon(e.url), alt: '', loading: 'lazy' }),
     el('div', { className: 'body' }, el('a', { className: 't', textContent: e.title || e.url, title: e.url, onclick: () => openTab(e.url) }), meta),
     tools
   );
 }
 
-$('filter').addEventListener('input', renderList);
+$('filter').addEventListener('input', () => (limits.clear(), renderList()));
 $('show').addEventListener('change', renderList);
 
 async function loadBookmarks() {

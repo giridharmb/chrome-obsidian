@@ -45,6 +45,7 @@ const SCENES = [
   { name: 'theme-sakura', page: 'popup', q: 'scene=browse&theme=sakura', size: [800, 600] },
   { name: 'theme-forest', page: 'popup', q: 'scene=browse&theme=forest', size: [800, 600] },
   { name: 'theme-coffee', page: 'popup', q: 'scene=browse&theme=coffee', size: [800, 600] },
+  { name: 'popup-large', page: 'popup', q: 'scene=browse&big=5000', size: [800, 420] },
   { name: 'options', page: 'options', q: '', size: [900, 1660] },
 ];
 

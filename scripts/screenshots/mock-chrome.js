@@ -22,6 +22,22 @@ for (const [cat, title, url, tags, note, readLater] of samples.reverse()) {
   doc = insertUnderHeading(doc, cat, renderEntry(settings, { title, url, category: cat, tags, note, readLater, clipPath, date: '2026-10-09' }));
 }
 
+// The duplicate scene shows a link that lives in two sections.
+if (params.get('scene') === 'dupe') {
+  doc = insertUnderHeading(doc, 'Reading', renderEntry(settings, { title: 'coddingtonbear/obsidian-local-rest-api', url: 'https://github.com/coddingtonbear/obsidian-local-rest-api', category: 'Reading', tags: [], readLater: false, date: '2026-11-20' }));
+}
+
+// ?big=3000 fills the note with that many generated bookmarks, to check the popup stays fast.
+if (params.get('big')) {
+  const lines = { Dev: [], Reading: [], Videos: [], Research: [], Tools: [] };
+  const names = Object.keys(lines);
+  for (let i = 0; i < +params.get('big'); i++) {
+    const cat = names[i % names.length];
+    lines[cat].push(renderEntry(settings, { title: `Generated bookmark ${i}`, url: `https://site${i % 97}.example.com/page/${i}`, category: cat, tags: [`topic${i % 23}`], readLater: i % 3 === 0, date: '2026-11-01' }));
+  }
+  for (const cat of names) doc = insertUnderHeading(doc, cat, lines[cat].join('\n'));
+}
+
 const NOTE = `---
 title: "Attention Is All You Need"
 source: "https://arxiv.org/abs/1706.03762"
