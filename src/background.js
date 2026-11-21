@@ -1,6 +1,7 @@
 import { getSettings } from './lib/settings.js';
 import { getPageInfo, getLinkText } from './lib/page.js';
 import * as core from './lib/core.js';
+import { canonUrl } from './lib/markdown.js';
 
 /* ---------------- Context menus ---------------- */
 
@@ -28,19 +29,44 @@ chrome.runtime.onInstalled.addListener(async ({ reason }) => {
   if (reason === 'install') chrome.runtime.openOptionsPage();
 });
 chrome.runtime.onStartup.addListener(buildMenus);
+
+// Retry bookmarks that were saved while Obsidian was closed.
+chrome.alarms.create('flush', { periodInMinutes: 1 });
+chrome.alarms.onAlarm.addListener(async () => core.flushQueue(await getSettings()).catch(() => {}));
 chrome.storage.onChanged.addListener((changes) => {
   if (changes.settings) buildMenus();
 });
 
 /* ---------------- Feedback ---------------- */
 
-async function flash(tabId, ok) {
+async function flash(tabId, ok, text = ok ? '✓' : '!') {
   try {
     await chrome.action.setBadgeBackgroundColor({ color: ok ? '#16a34a' : '#dc2626', tabId });
-    await chrome.action.setBadgeText({ text: ok ? '✓' : '!', tabId });
-    setTimeout(() => chrome.action.setBadgeText({ text: '', tabId }).catch(() => {}), 2500);
+    await chrome.action.setBadgeText({ text, tabId });
+    if (tabId) setTimeout(() => chrome.tabs.get(tabId).then(markSaved, () => {}), 2500);
   } catch {}
 }
+
+/** ★ on the icon when the tab's page is already bookmarked. */
+async function markSaved(tab) {
+  if (!tab?.id) return;
+  const s = await getSettings();
+  let saved = false;
+  if (s.mode === 'rest' && s.apiKey && /^https?:/.test(tab.url || '')) {
+    const u = canonUrl(tab.url);
+    saved = await core.cachedBookmarks(s).then((d) => d.entries.some((e) => canonUrl(e.url) === u), () => false);
+  }
+  try {
+    if (saved) await chrome.action.setBadgeBackgroundColor({ color: '#7c3aed', tabId: tab.id });
+    await chrome.action.setBadgeText({ text: saved ? '★' : '', tabId: tab.id });
+  } catch {}
+}
+
+const markActive = () => chrome.tabs.query({ active: true, lastFocusedWindow: true }).then(([t]) => markSaved(t));
+chrome.tabs.onActivated.addListener(({ tabId }) => chrome.tabs.get(tabId).then(markSaved, () => {}));
+chrome.tabs.onUpdated.addListener((_id, info, tab) => {
+  if (info.status === 'complete') markSaved(tab);
+});
 
 function notify(title, message) {
   chrome.notifications.create({ type: 'basic', iconUrl: chrome.runtime.getURL('icons/icon128.png'), title, message });
@@ -49,8 +75,8 @@ function notify(title, message) {
 async function run(tab, item) {
   const s = await getSettings();
   try {
-    const r = await core.saveItem(s, item);
-    await flash(tab?.id, true);
+    const r = await core.saveOrQueue(s, item);
+    await flash(tab?.id, true, r.queued ? '…' : '✓');
     return r;
   } catch (e) {
     await flash(tab?.id, false);
@@ -108,10 +134,13 @@ chrome.commands.onCommand.addListener(async (command, tab) => {
 /* ---------------- Messages from popup / side panel / options ---------------- */
 
 const handlers = {
-  save: (s, m) => core.saveItem(s, m.item),
+  save: (s, m) => core.saveOrQueue(s, m.item).finally(markActive),
+  saveTabs: async (s) => core.saveTabs(s, await chrome.tabs.query({ lastFocusedWindow: true })),
+  remove: (s, m) => core.removeBookmark(s, m.url, m.file).finally(markActive),
   status: (s) => core.status(s),
   bookmarks: (s) => core.getBookmarks(s),
-  toggleRead: (s, m) => core.toggleRead(s, m.url),
+  tags: (s) => core.client(s).tags().catch(() => []), // older plugins: fall back to bookmark tags only
+  toggleRead: (s, m) => core.toggleRead(s, m.url, m.file),
   search: (s, m) => core.searchVault(s, m.query),
   readNote: (s, m) => core.readNote(s, m.path),
   open: (s, m) => core.openInObsidian(s, m.path),
@@ -126,4 +155,30 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     .then((data) => sendResponse({ ok: true, data }))
     .catch((e) => sendResponse({ ok: false, error: e.message || String(e) }));
   return true;
+});
+
+/* ---------------- Address bar: "ob <words>" searches saved bookmarks ---------------- */
+
+const xml = (t) => (t || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+
+async function matchBookmarks(text) {
+  const words = text.toLowerCase().split(/\s+/).filter(Boolean);
+  const { entries } = await core.cachedBookmarks(await getSettings());
+  return entries
+    .filter((e) => {
+      const hay = [e.title, e.url, e.section, e.note, ...e.tags].join(' ').toLowerCase();
+      return words.every((w) => hay.includes(w));
+    })
+    .slice(0, 8);
+}
+
+chrome.omnibox.onInputChanged.addListener((text, suggest) => {
+  matchBookmarks(text)
+    .then((m) => suggest(m.map((e) => ({ content: e.url, description: `${xml(e.title)} <dim>${xml(e.section)}</dim> <url>${xml(e.url)}</url>` }))))
+    .catch(() => {});
+});
+
+chrome.omnibox.onInputEntered.addListener(async (text) => {
+  const url = /^https?:/.test(text) ? text : (await matchBookmarks(text).catch(() => []))[0]?.url;
+  if (url) chrome.tabs.update({ url });
 });

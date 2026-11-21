@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Obsidian Bookmarker",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Save pages, links, images and highlights into an organized Obsidian bookmarks note — silently or with a popup — and browse your notes from Chrome.",
   "icons": {
     "16": "icons/icon16.png",
@@ -24,9 +24,11 @@
   "side_panel": {
     "default_path": "popup/popup.html"
   },
+  "omnibox": { "keyword": "ob" },
   "options_page": "options/options.html",
   "permissions": [
     "storage",
+    "alarms",
     "contextMenus",
     "activeTab",
     "tabs",

@@ -34,3 +34,14 @@ console.log('ALL OK');
   assert.equal(img.image, true);
   console.log('image entry OK');
 }
+{
+  assert.equal(m.cleanUrl('https://a.com/p?utm_source=x&id=7&fbclid=abc'), 'https://a.com/p?id=7');
+  assert.equal(m.cleanUrl('https://a.com/p?q=a b'), 'https://a.com/p?q=a b'); // untouched when nothing to strip
+  assert.equal(m.cleanUrl('not a url'), 'not a url');
+  assert.equal(m.canonUrl('https://a.com/p/?utm_medium=x'), m.canonUrl('https://a.com/p'));
+  const d = '## Dev\n\n- [A](https://a.com)\n\t> quote\n- [ ] [B](https://b.com/?utm_source=z)\n';
+  assert.equal(m.removeEntry(d, 'https://a.com/'), '## Dev\n\n- [ ] [B](https://b.com/?utm_source=z)\n');
+  assert.equal(m.removeEntry(d, 'https://b.com/'), '## Dev\n\n- [A](https://a.com)\n\t> quote\n');
+  assert.equal(m.removeEntry(d, 'https://nope.com'), null);
+  console.log('cleanUrl / removeEntry OK');
+}

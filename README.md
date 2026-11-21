@@ -59,7 +59,14 @@ Manifest V3 · No build step · No external servers · Works with the Obsidian *
 | 📖 **Read-later checklist** | Entries can be `- [ ]` tasks. Tick them off in Obsidian **or** from the extension. |
 | 📝 **Dedicated notes** | Optionally create a full note per bookmark with frontmatter, highlights and notes, linked from the hub note. |
 | 🖼 **Images** | Embed by URL, or download into your vault's attachments folder. |
-| 🔁 **Duplicate detection** | The popup tells you if (and where) a page is already saved. |
+| 🔁 **Duplicate detection** | The popup tells you if (and where) a page is already saved, and the toolbar icon shows a **★** on saved pages. |
+| 📴 **Offline queue** | If Obsidian is closed, saves are kept and written automatically (checked every minute) once it's back. |
+| 🧹 **Clean URLs** | Tracking parameters (`utm_*`, `fbclid`, `gclid`, …) are stripped before saving and ignored when checking duplicates. |
+| ↩️ **Undo & delete** | *Undo* right after saving, or delete any entry from the Bookmarks tab. |
+| ⌨️ **Address-bar search** | Type `ob`, press Tab or Space, then a few words to find a saved bookmark. |
+| 🗂 **Save all tabs** | Saves every tab in the window under one dated *Session* section. |
+| 📅 **Daily note** | Optionally also logs each save in today's daily note. |
+| 📂 **One note per section** | Optionally keeps each section in its own note (`Bookmarks/Dev.md`, …) instead of one big note. |
 | 🔎 **Browse & search** | List all bookmarks by section, filter them, search the whole vault and preview notes — inside Chrome. |
 | 🪟 **Side panel** | Keep the same UI docked next to the page; it follows the active tab. |
 | 🌗 **Light & dark** | Follows your system theme. |
@@ -239,7 +246,7 @@ Press `Alt+Shift+O` or click the toolbar icon.
 
 - **Title** — prefilled from the page (`og:title` / `<title>`), editable.
 - **Section** — auto-selected from your rules; click another chip or **+ New** to create one.
-- **Tags** — space- or comma-separated; click suggestions (your most-used tags) to add them.
+- **Tags** — space- or comma-separated. Suggestions narrow as you type; press **Tab** to accept the first one or click any chip. They come from your bookmarks and, when the plugin supports it, every tag in your vault.
 - **Note** — a one-liner appended after `—`.
 - **Include highlighted text** — appears when you had text selected on the page.
 - **Read later** — adds the `- [ ]` checkbox.
@@ -277,7 +284,8 @@ Header buttons: **▯** open side panel · **↗** open the bookmarks note in Ob
 </p>
 
 - Grouped by section (click a section header to collapse it).
-- Filter by title, domain, note or `#tag`; switch between **All / Read later / Done**.
+- Filter by several words at once (title, domain, note, `#tag`); switch between **All / Read later / Done**.
+- Click a tag chip at the top, or a tag on any entry, to filter by it. Click again to clear it.
 - Tick the checkbox to mark as read — it updates `- [ ]` → `- [x]` in Obsidian.
 - Click a title to open the page. Entries with a dedicated note show **Note** (open in Obsidian) and **View** (preview here) on hover.
 
@@ -289,7 +297,7 @@ Header buttons: **▯** open side panel · **↗** open the bookmarks note in Ob
   <img src="docs/images/popup-note.png" width="300" alt="Note preview">
 </p>
 
-Searches **all notes in your vault** (not just bookmarks) via the REST API. Click a result to preview it — frontmatter, headings, lists, callouts, `[[wikilinks]]` (clickable) and tags are rendered. **Open in Obsidian** jumps to the note in the app.
+Searches **all notes in your vault** (not just bookmarks) via the REST API, as you type. Click a tag inside a note preview to search the vault for that tag. Click a result to preview it — frontmatter, headings, lists, callouts, `[[wikilinks]]` (clickable) and tags are rendered. **Open in Obsidian** jumps to the note in the app.
 
 ### Side panel
 
@@ -307,6 +315,16 @@ Click **▯** in the popup header (or right-click the toolbar icon → *Open Obs
 | `⌘/Ctrl+Shift+Enter` | Save & open in Obsidian (in popup) |
 
 Change them at `chrome://extensions/shortcuts`.
+
+### Address-bar search
+
+Type `ob` in the address bar, press **Tab** (or Space), then type words from a title, domain, section or tag. Pick a suggestion to open it; pressing Enter opens the best match.
+
+### Undo, delete and offline saves
+
+- After saving from the popup, the toast shows **Undo** for a moment.
+- In the **Bookmarks** tab, hover an entry and click **✕** to delete it. Only the list entry is removed; a dedicated note or downloaded image stays in the vault.
+- If Obsidian isn't running, the save is queued (the icon shows **…**) and written within a minute of Obsidian coming back. Quick-saves, right-click saves and popup saves are all queued; *Save all tabs* is not.
 
 ---
 
@@ -333,6 +351,9 @@ Change them at `chrome://extensions/shortcuts`.
 | Link dates to daily notes | off | Writes `[[2026-10-09]]` instead of `2026-10-09` |
 | Download images into the vault | off | Asks Chrome for site access when enabled; falls back to remote URL if a download fails |
 | Close popup after saving | on | |
+| Also log each save in today's daily note | off | REST mode. Appends the entry to the end of today's daily note; needs Obsidian's *Daily notes* core plugin (or Periodic Notes). |
+| One note per section | off | REST mode. New saves go to `<bookmarks folder>/<Section>.md`. The Bookmarks tab, duplicate check and ★ badge read every note in that folder, so entries already in the hub note still show. |
+| Export / Import | — | Buttons at the bottom of the settings page. The export file never contains your API key. |
 
 ---
 
@@ -430,6 +451,7 @@ The extension talks **only to Obsidian on your own machine** (`127.0.0.1` / `loc
 | `tabs` | Read the active tab's title/URL (needed for the side panel, which doesn't get `activeTab`) |
 | `contextMenus` | Right-click menu items |
 | `storage` | Save your settings locally |
+| `alarms` | Retry queued saves once a minute while Obsidian was closed |
 | `notifications` | Show an error if a background save fails |
 | `sidePanel` | The docked side panel |
 | `favicon` | Show site icons in the bookmarks list (served by Chrome locally) |

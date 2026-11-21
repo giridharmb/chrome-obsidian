@@ -200,4 +200,8 @@ blockquote {
   font-size: 12px; opacity: 0; transition: .2s; pointer-events: none; max-width: 90%;
 }
 #toast.show { opacity: 1; transform: translate(-50%, 0); }
+.item .tag, .md .md-tag { cursor: pointer; }
+.item .tag:hover { text-decoration: underline; }
+.chip i { font-style: normal; opacity: .6; margin-left: 3px; }
+#toast a { color: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; }
 #toast.err { background: var(--err); color: #fff; }

@@ -27,8 +27,23 @@ const escapeLinkText = (t) => (t || '').replace(/\s+/g, ' ').replace(/([[\]])/g,
 export const escapeUrl = (u) => (u || '').trim().replace(/ /g, '%20').replace(/\(/g, '%28').replace(/\)/g, '%29');
 const wikiSafe = (t) => (t || '').replace(/[|[\]#^]/g, ' ').replace(/\s+/g, ' ').trim();
 
+const TRACKING = /^(utm_\w+|fbclid|gclid|dclid|msclkid|mc_cid|mc_eid|igshid|_hsenc|_hsmi|ref_src)$/i;
+
+/** Strip tracking parameters. Returns the input untouched when there are none (no re-encoding). */
+export function cleanUrl(u) {
+  try {
+    const url = new URL(u);
+    const junk = [...url.searchParams.keys()].filter((k) => TRACKING.test(k));
+    if (!junk.length) return u;
+    junk.forEach((k) => url.searchParams.delete(k));
+    return url.href;
+  } catch {
+    return u || '';
+  }
+}
+
 /** Canonical form for duplicate detection. */
-export const canonUrl = (u) => escapeUrl(u).replace(/\/+$/, '');
+export const canonUrl = (u) => escapeUrl(cleanUrl(u)).replace(/\/+$/, '');
 
 /** Safe file name for a note (no path separators or Obsidian-reserved characters). */
 export function safeFileName(title, max = 80) {
@@ -306,6 +321,18 @@ export function toggleEntry(content, url) {
     }
   }
   return null;
+}
+
+/** Remove the first entry with this URL, plus its indented children (highlight quote). Null if not found. */
+export function removeEntry(content, url) {
+  const lines = content.split('\n');
+  const target = canonUrl(url);
+  const i = lines.findIndex((l) => /^[-*+]\s/.test(l) && [...l.matchAll(/\]\(([^)\s]+)\)/g)].some((x) => canonUrl(x[1]) === target));
+  if (i === -1) return null;
+  let n = 1;
+  while (i + n < lines.length && /^\s+\S/.test(lines[i + n])) n++;
+  lines.splice(i, n);
+  return lines.join('\n');
 }
 
 /* ---------- Tiny, safe markdown → HTML renderer for previews ---------- */

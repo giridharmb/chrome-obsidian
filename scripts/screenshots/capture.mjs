@@ -23,8 +23,8 @@ const CHROME =
       : 'google-chrome');
 
 const SCENES = [
-  { name: 'popup-save', page: 'popup', q: 'scene=save&tall=1', size: [400, 830] },
-  { name: 'popup-save-dark', page: 'popup', q: 'scene=save&tall=1', size: [400, 830], dark: true },
+  { name: 'popup-save', page: 'popup', q: 'scene=save&tall=1', size: [400, 880] },
+  { name: 'popup-save-dark', page: 'popup', q: 'scene=save&tall=1', size: [400, 880], dark: true },
   { name: 'popup-duplicate', page: 'popup', q: `scene=dupe&sel=&title=coddingtonbear/obsidian-local-rest-api&url=${encodeURIComponent('https://github.com/coddingtonbear/obsidian-local-rest-api')}`, size: [400, 420] },
   { name: 'popup-bookmarks', page: 'popup', q: 'scene=browse', size: [400, 600] },
   { name: 'popup-unread', page: 'popup', q: 'scene=unread', size: [400, 480] },

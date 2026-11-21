@@ -69,6 +69,8 @@
         <label class="check"><input type="checkbox" id="linkDate"> Link dates to daily notes (<code>[[2026-10-09]]</code>)</label>
         <label class="check"><input type="checkbox" id="downloadImages"> Download images into the vault (asks for site access)</label>
         <label class="check"><input type="checkbox" id="closeAfterSave"> Close popup after saving</label>
+        <label class="check"><input type="checkbox" id="dailyNote"> Also log each save in today's daily note</label>
+        <label class="check"><input type="checkbox" id="splitBySection"> One note per section (<code>Bookmarks/Dev.md</code>…)</label>
       </div>
     </div>
 
@@ -79,6 +81,9 @@
 
     <div class="bar">
       <button id="reset">Reset to defaults</button>
+      <button id="export">Export</button>
+      <button id="import">Import</button>
+      <input id="import-file" type="file" accept="application/json" hidden>
       <span id="saved" class="result-msg"></span>
       <button id="save-settings" class="primary">Save settings</button>
     </div>

@@ -29,10 +29,12 @@ export class RestClient {
         body,
       });
     } catch {
-      throw new ObsidianError(
+      const err = new ObsidianError(
         `Can't reach Obsidian at ${this.base}. Is Obsidian open with the Local REST API plugin enabled?`,
         0
       );
+      err.offline = true; // lets callers queue the save instead of losing it
+      throw err;
     }
     if (res.status === 404 && allow404) return null;
     if (res.status === 401 || res.status === 403) throw new ObsidianError('Obsidian rejected the API key. Check it in the extension options.', res.status);
@@ -74,6 +76,26 @@ export class RestClient {
 
   async exists(path) {
     return (await this.read(path)) !== null;
+  }
+
+  /** Markdown files directly inside a folder (not recursive). */
+  async list(dir) {
+    const res = await this.req(`/vault/${encPath(dir)}/`, { allow404: true });
+    return res ? ((await res.json()).files || []).filter((f) => f.endsWith('.md')).map((f) => `${dir}/${f}`) : [];
+  }
+
+  /** Append to today's daily note (uses Obsidian's own daily-note settings). */
+  async appendDaily(content) {
+    await this.req('/periodic/daily/', { method: 'POST', headers: { 'Content-Type': 'text/markdown' }, body: content });
+  }
+
+  /** Every tag in the vault as [{ name: '#tag', count }]. Only newer plugin versions have this endpoint. */
+  async tags() {
+    const j = await (await this.req('/tags/')).json();
+    return (Array.isArray(j) ? j : j.tags || [])
+      .map((t) => (typeof t === 'string' ? { name: t, count: 1 } : { name: t.name ?? t.tag, count: t.count ?? 1 }))
+      .filter((t) => t.name)
+      .map((t) => ({ name: `#${String(t.name).replace(/^#/, '')}`, count: t.count }));
   }
 
   async open(path) {

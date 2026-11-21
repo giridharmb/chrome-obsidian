@@ -54,7 +54,7 @@
 
       <label class="field">
         <span>Tags</span>
-        <input id="tags" placeholder="ai  research  to-try" autocomplete="off">
+        <input id="tags" placeholder="type to autocomplete, Tab to accept" autocomplete="off">
       </label>
       <div id="tag-suggest" class="chips small"></div>
 
@@ -82,17 +82,19 @@
         <button id="save" class="primary">Save <kbd id="kbd">⌘↵</kbd></button>
         <button id="save-open">Save &amp; open in Obsidian</button>
       </div>
+      <button id="save-tabs" class="small" title="Saves every tab in this window under one dated Session section">Save all tabs in this window</button>
     </section>
 
     <section id="tab-browse" hidden>
       <div class="row">
-        <input id="filter" type="search" placeholder="Filter by title, domain, #tag…" autocomplete="off">
+        <input id="filter" type="search" placeholder="Filter: words, domain, #tag…" autocomplete="off">
         <select id="show">
           <option value="all">All</option>
           <option value="unread">Read later</option>
           <option value="done">Done</option>
         </select>
       </div>
+      <div id="tag-cloud" class="chips small"></div>
       <div id="list" class="list"></div>
     </section>
 

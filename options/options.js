@@ -3,7 +3,7 @@ import { renderEntry } from '../src/lib/markdown.js';
 
 const $ = (id) => document.getElementById(id);
 const TEXT = ['apiUrl', 'apiKey', 'vaultName', 'bookmarksFile', 'clippingsFolder', 'attachmentsFolder', 'tagPrefix', 'entryTemplate', 'domainRules'];
-const BOOL = ['addCategoryTag', 'readLater', 'newestFirst', 'linkDate', 'downloadImages', 'closeAfterSave'];
+const BOOL = ['addCategoryTag', 'readLater', 'newestFirst', 'linkDate', 'downloadImages', 'closeAfterSave', 'dailyNote', 'splitBySection'];
 
 const lines = (v) => v.split('\n').map((l) => l.trim()).filter(Boolean);
 
@@ -91,6 +91,34 @@ $('reset').onclick = async () => {
   await resetSettings();
   await load();
   flash('saved', 'Defaults restored', true);
+};
+
+// The API key stays out of the export file on purpose.
+$('export').onclick = async () => {
+  const { apiKey, ...rest } = await getSettings();
+  const a = Object.assign(document.createElement('a'), {
+    href: URL.createObjectURL(new Blob([JSON.stringify(rest, null, 2)], { type: 'application/json' })),
+    download: 'obsidian-bookmarker-settings.json',
+  });
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
+
+$('import').onclick = () => $('import-file').click();
+$('import-file').onchange = async (e) => {
+  try {
+    const data = JSON.parse(await e.target.files[0].text());
+    // Only known settings of the right type; never the API key.
+    const patch = Object.fromEntries(
+      Object.entries(data).filter(([k, v]) => k !== 'apiKey' && k in DEFAULTS && typeof v === typeof DEFAULTS[k] && Array.isArray(v) === Array.isArray(DEFAULTS[k]))
+    );
+    await saveSettings(patch);
+    await load();
+    flash('saved', `Imported ${Object.keys(patch).length} settings`, true);
+  } catch {
+    flash('saved', 'That file is not a valid settings export.', false);
+  }
+  e.target.value = '';
 };
 
 $('test').onclick = async () => {

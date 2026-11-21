@@ -12,6 +12,9 @@ import {
   insertUnderHeading,
   parseBookmarks,
   toggleEntry,
+  removeEntry,
+  cleanUrl,
+  fmtTime,
   safeFileName,
   fmtDate,
   slug,
@@ -55,14 +58,34 @@ export async function openInObsidian(s, path) {
   }
 }
 
+const dirOf = (p) => (p.includes('/') ? p.slice(0, p.lastIndexOf('/')) : 'Bookmarks');
+
+/** Which note a section's entries live in. */
+export const fileFor = (s, category) =>
+  s.splitBySection && s.mode === 'rest'
+    ? `${dirOf(s.bookmarksFile)}/${category.replace(/[^\p{L}\p{N} _-]/gu, '').trim() || 'Bookmarks'}.md`
+    : s.bookmarksFile;
+
+let cache = { at: 0, data: null };
+
+/** Serialized read → fn → write. fn gets null for a missing note and returns null to abort. */
+function editNote(s, path, fn) {
+  requireRest(s);
+  const c = client(s);
+  return serialize(async () => {
+    const next = fn(await c.read(path));
+    if (next == null) return false;
+    await c.write(path, next);
+    cache.at = 0;
+    return true;
+  });
+}
+
 async function appendToBookmarks(s, heading, block) {
   if (s.mode === 'rest') {
-    requireRest(s);
-    const c = client(s);
-    return serialize(async () => {
-      const current = (await c.read(s.bookmarksFile)) ?? newBookmarksFile(s);
-      await c.write(s.bookmarksFile, insertUnderHeading(current, heading, block, { newestFirst: s.newestFirst }));
-    });
+    return editNote(s, fileFor(s, heading), (cur) =>
+      insertUnderHeading(cur ?? (s.splitBySection ? '' : newBookmarksFile(s)), heading, block, { newestFirst: s.newestFirst }).replace(/^\n+/, '')
+    );
   }
   const uri =
     s.mode === 'advanced-uri'
@@ -101,6 +124,7 @@ export async function saveItem(s, item) {
   let category;
   let block;
   let notePath = null;
+  item = { ...item, url: cleanUrl(item.url), pageUrl: cleanUrl(item.pageUrl) };
 
   if (item.kind === 'image') {
     category = s.imageCategory;
@@ -128,18 +152,86 @@ export async function saveItem(s, item) {
       selection: item.selection,
       readLater: item.readLater ?? s.readLater,
       clipPath: notePath,
+      date: item.date,
     });
   }
 
+  const file = fileFor(s, category);
   await appendToBookmarks(s, category, block);
-  if (item.open) await openInObsidian(s, notePath || s.bookmarksFile);
-  return { category, notePath, file: s.bookmarksFile };
+  if (s.dailyNote && s.mode === 'rest') {
+    // Best effort: needs Obsidian's Daily notes plugin; the bookmark itself is already saved.
+    await client(s).appendDaily(block).catch((e) => console.warn('Daily note logging failed:', e));
+  }
+  if (item.open) await openInObsidian(s, notePath || file);
+  return { category, notePath, file, url: item.url };
+}
+
+/** Like saveItem, but if Obsidian is unreachable the item is kept and saved later by flushQueue. */
+export async function saveOrQueue(s, item) {
+  try {
+    return await saveItem(s, item);
+  } catch (e) {
+    if (!e.offline) throw e;
+    const { queue = [] } = await chrome.storage.local.get('queue');
+    await chrome.storage.local.set({ queue: [...queue, { ...item, date: fmtDate(), open: false }] });
+    return { queued: true };
+  }
+}
+
+let flushing = false;
+export async function flushQueue(s) {
+  if (flushing) return;
+  flushing = true;
+  try {
+    for (;;) {
+      const { queue = [] } = await chrome.storage.local.get('queue');
+      if (!queue.length) return;
+      try {
+        await saveItem(s, queue[0]);
+      } catch (e) {
+        if (e.offline) return; // still down; try again on the next alarm
+        console.warn('Dropping queued bookmark that cannot be saved:', queue[0].url, e);
+      }
+      // Re-read so items queued while we were saving are not lost.
+      const now = (await chrome.storage.local.get('queue')).queue || [];
+      await chrome.storage.local.set({ queue: now.slice(1) });
+    }
+  } finally {
+    flushing = false;
+  }
+}
+
+/** Save every tab as one dated "Session" section. */
+export async function saveTabs(s, tabs) {
+  const pages = tabs.filter((t) => /^https?:/.test(t.url || ''));
+  if (!pages.length) throw new ObsidianError('No web pages open in this window.', 0);
+  const section = `🗂 Session ${fmtDate()} ${fmtTime()}`;
+  const block = pages
+    .map((t) => renderEntry(s, { title: t.title, url: cleanUrl(t.url), category: 'Session', tags: [], readLater: s.readLater }))
+    .join('\n');
+  await appendToBookmarks(s, section, block);
+  return { count: pages.length, category: section };
 }
 
 export async function getBookmarks(s) {
   requireRest(s);
-  const content = await client(s).read(s.bookmarksFile);
-  return content ? parseBookmarks(content) : { entries: [], sections: [] };
+  const c = client(s);
+  const files = s.splitBySection ? [...new Set([s.bookmarksFile, ...(await c.list(dirOf(s.bookmarksFile)))])] : [s.bookmarksFile];
+  const out = { entries: [], sections: [] };
+  for (const file of files) {
+    const content = await c.read(file);
+    if (!content) continue;
+    const p = parseBookmarks(content);
+    out.entries.push(...p.entries.map((e) => ({ ...e, file })));
+    out.sections.push(...p.sections);
+  }
+  return out;
+}
+
+/** getBookmarks with a 60s cache, for the icon badge and address-bar search. */
+export async function cachedBookmarks(s) {
+  if (!cache.data || Date.now() - cache.at > 60000) cache = { at: Date.now(), data: await getBookmarks(s) };
+  return cache.data;
 }
 
 export async function findExisting(s, url) {
@@ -148,15 +240,13 @@ export async function findExisting(s, url) {
   return entries.find((e) => canonUrl(e.url) === u) || null;
 }
 
-export async function toggleRead(s, url) {
-  requireRest(s);
-  const c = client(s);
-  return serialize(async () => {
-    const content = await c.read(s.bookmarksFile);
-    const next = content && toggleEntry(content, url);
-    if (!next) throw new ObsidianError('Entry has no read-later checkbox.', 0);
-    await c.write(s.bookmarksFile, next);
-  });
+export async function toggleRead(s, url, file) {
+  if (!(await editNote(s, file || s.bookmarksFile, (cur) => cur && toggleEntry(cur, url)))) throw new ObsidianError('Entry has no read-later checkbox.', 0);
+}
+
+/** Removes the list entry only; a dedicated note or downloaded image stays in the vault. */
+export async function removeBookmark(s, url, file) {
+  if (!(await editNote(s, file || s.bookmarksFile, (cur) => cur && removeEntry(cur, url)))) throw new ObsidianError('Bookmark not found in the note.', 0);
 }
 
 export async function searchVault(s, query) {
