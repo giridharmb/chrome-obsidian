@@ -307,18 +307,17 @@ function renderList() {
     const hay = [e.title, e.url, e.section, e.note, ...e.tags].join(' ').toLowerCase();
     return words.every((w) => hay.includes(w));
   });
-  if (!items.length) {
-    list.replaceChildren(el('div', { className: 'empty', textContent: data.entries.length ? 'No matches.' : 'No bookmarks yet — save your first page!' }));
+  if (!items.length && (f || show !== 'all')) {
+    list.replaceChildren(el('div', { className: 'empty', textContent: 'No matches.' }));
     return;
   }
-  const groups = new Map();
-  for (const e of items) {
-    const k = e.section || 'Unsorted';
-    if (!groups.has(k)) groups.set(k, []);
-    groups.get(k).push(e);
-  }
+  const groups = new Map(); // keyed without emoji/case so "Dev" and "💻 Dev" are one group
+  const group = (name) => groups.get(norm(name)) || groups.set(norm(name), [name, []]).get(norm(name));
+  // Unfiltered view lists every section, including empty ones.
+  if (!f && show === 'all') [...S.categories, ...data.sections].forEach(group);
+  for (const e of items) group(e.section || 'Unsorted')[1].push(e);
   const out = [];
-  for (const [section, entries] of groups) {
+  for (const [section, entries] of groups.values()) {
     const h = el('div', { className: 'group-h' }, el('span', { textContent: section }), el('span', { textContent: entries.length }));
     h.onclick = () => h.classList.toggle('collapsed');
     out.push(h, el('div', { className: 'group' }, ...entries.map(renderItem)));

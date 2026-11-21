@@ -13,6 +13,7 @@ import {
   parseBookmarks,
   toggleEntry,
   removeEntry,
+  shrinkSections,
   cleanUrl,
   fmtTime,
   safeFileName,
@@ -84,7 +85,7 @@ function editNote(s, path, fn) {
 async function appendToBookmarks(s, heading, block) {
   if (s.mode === 'rest') {
     return editNote(s, fileFor(s, heading), (cur) =>
-      insertUnderHeading(cur ?? (s.splitBySection ? '' : newBookmarksFile(s)), heading, block, { newestFirst: s.newestFirst }).replace(/^\n+/, '')
+      insertUnderHeading(shrinkSections(cur ?? (s.splitBySection ? '' : newBookmarksFile(s)), s.categories), heading, block, { newestFirst: s.newestFirst }).replace(/^\n+/, '')
     );
   }
   const uri =

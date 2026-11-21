@@ -84,26 +84,26 @@ tags:
 ---
 # 🔖 Bookmarks
 
-## 📥 Inbox
+### 📥 Inbox
 
-## 💻 Dev
+### 💻 Dev
 - [ ] [obsidian-local-rest-api](https://github.com/coddingtonbear/obsidian-local-rest-api) #bookmark/dev #obsidian #api · github.com · 2026-10-09 — powers this extension
 - [Vite — Getting Started](https://vitejs.dev/guide/) #bookmark/dev #frontend · vitejs.dev · 2026-10-09
 
-## 📚 Reading
+### 📚 Reading
 - [ ] [How to take smart notes](https://fortelabs.com/blog/how-to-take-smart-notes/) #bookmark/reading #pkm · fortelabs.com · 2026-10-09
 	> Capture first, organize later: a single inbox note with sections beats a hundred scattered files.
 
-## 🧪 Research
+### 🧪 Research
 - [ ] [[Bookmarks/Clippings/Attention Is All You Need|Attention Is All You Need]] [↗](https://arxiv.org/abs/1706.03762) #bookmark/research #ml · arxiv.org · 2026-10-09
 
-## 🖼 Images
+### 🖼 Images
 - ![[Bookmarks/Attachments/2026-10-09-diagram-12345.png|300]] from [Some article](https://example.com/post) #bookmark/images · 2026-10-09
 ```
 
 | Concept | How it works |
 |---|---|
-| **Sections = categories** | Picked automatically by [auto-sort rules](#settings-reference), overridable in the popup. Create new sections on the fly with **+ New**. Matching ignores emoji and case, so `Dev` matches `## 💻 Dev` — rename/decorate headings in Obsidian freely. |
+| **Sections = categories** | Picked automatically by [auto-sort rules](#settings-reference), overridable in the popup. Create new sections on the fly with **+ New**. Matching ignores emoji and case, so `Dev` matches `### 💻 Dev` — rename/decorate headings in Obsidian freely. |
 | **Tags** | Every entry gets `#bookmark/<section>` plus your own tags. Obsidian's tag pane nests them; search `tag:#bookmark/dev` anywhere. |
 | **Read later** | `- [ ]` = unread, `- [x]` = done. Shows up in Obsidian's task queries. |
 | **Highlights** | Selected text is saved as an indented quote under the entry. |
@@ -401,7 +401,7 @@ npm test
 | # | Test | Expected |
 |---|---|---|
 | 1 | Settings → **Test connection** | Green "Connected · …" |
-| 2 | Popup on a GitHub page → **Save** | Entry under `## 💻 Dev` in `Bookmarks/Bookmarks.md` |
+| 2 | Popup on a GitHub page → **Save** | Entry under `### 💻 Dev` in `Bookmarks/Bookmarks.md` |
 | 3 | Open the popup on the same page again | Yellow "Already saved in 💻 Dev…" |
 | 4 | `Alt+Shift+B` on a YouTube video | ✓ badge, entry under 🎥 Videos |
 | 5 | Select text → right-click → **Save highlight** | Entry with an indented `> quote` |

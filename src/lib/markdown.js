@@ -198,7 +198,7 @@ export function newBookmarksFile(settings) {
     `> Every entry is tagged \`#${prefix}/<category>\` so you can query across your vault.`,
     '',
   ];
-  const sections = (settings.categories || []).flatMap((c) => [`## ${c}`, '']);
+  const sections = (settings.categories || []).flatMap((c) => [`### ${c}`, '']);
   return [...head, ...sections].join('\n');
 }
 
@@ -227,7 +227,7 @@ export function insertUnderHeading(content, heading, block, { newestFirst = true
 
   if (start === -1) {
     while (lines.length && lines[lines.length - 1].trim() === '') lines.pop();
-    return [...lines, '', `## ${heading}`, '', ...blockLines, ''].join('\n');
+    return [...lines, '', `### ${heading}`, '', ...blockLines, ''].join('\n');
   }
 
   let end = lines.length;
@@ -252,6 +252,12 @@ export function insertUnderHeading(content, heading, block, { newestFirst = true
   else if (newestFirst) newBody = [...blockLines, ...(isListish(body[0]) ? [] : ['']), ...body];
   else newBody = [...body, ...(isListish(body[body.length - 1]) ? [] : ['']), ...blockLines];
   return [...lines.slice(0, start + 1), '', ...newBody, '', ...lines.slice(end)].join('\n');
+}
+
+/** Section headings used to be H2; shrink those (and only those) to H3 so old notes match new ones. */
+export function shrinkSections(content, categories) {
+  const known = new Set(categories.map(norm));
+  return content.replace(/^## (.+)$/gm, (line, text) => (known.has(norm(text)) || text.startsWith('🗂 Session ') ? `### ${text}` : line));
 }
 
 const LIST_ITEM = /^([-*+])\s+(?:\[([ xX])\]\s+)?(.*)$/;

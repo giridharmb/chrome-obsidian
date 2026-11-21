@@ -45,3 +45,9 @@ console.log('ALL OK');
   assert.equal(m.removeEntry(d, 'https://nope.com'), null);
   console.log('cleanUrl / removeEntry OK');
 }
+{
+  const old = '# T\n\n## 💻 Dev\n\n- a\n\n## My own heading\n\n## 🗂 Session 2026-11-11 10:00\n';
+  assert.equal(m.shrinkSections(old, ['Dev']), '# T\n\n### 💻 Dev\n\n- a\n\n## My own heading\n\n### 🗂 Session 2026-11-11 10:00\n');
+  assert.ok(m.insertUnderHeading(m.newBookmarksFile(s), 'Brand new', '- x').includes('\n### Brand new\n'));
+  console.log('shrinkSections OK');
+}
