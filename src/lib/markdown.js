@@ -297,12 +297,14 @@ export function parseBookmarks(content) {
     const links = [...rest.matchAll(/(!?)\[((?:\\.|[^\]\\])*)\]\(([^)\s]+)\)/g)].filter((x) => !x[1]);
     const urlLink = links.find((x) => /^https?:/i.test(x[3]));
     if (!urlLink) return;
-    const wiki = /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/.exec(rest);
+    // Only a leading [[link]] is the entry's own note; a [[link]] later on belongs to the user's note text.
+    const wiki = /^\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/.exec(rest);
     const isImage = /^!\[/.test(rest);
     const title = (wiki && !isImage ? wiki[2] || wiki[1] : urlLink[2]).replace(/\\([[\]])/g, '$1');
     const plain = rest.replace(/!?\[\[[^\]]*\]\]/g, ' ').replace(/!?\[(?:\\.|[^\]\\])*\]\([^)]*\)/g, ' ');
     const tags = [...plain.matchAll(/(?:^|\s)(#[\p{L}\p{N}_/-]+)/gu)].map((x) => x[1]);
-    const note = (/ — (.+)$/.exec(plain) || [])[1] || '';
+    const noteSrc = rest.replace(/^!?\[\[[^\]]*\]\]/, ' ').replace(/!?\[(?:\\.|[^\]\\])*\]\([^)]*\)/g, ' ');
+    const note = (/ — (.+)$/.exec(noteSrc) || [])[1] || '';
     out.push({
       section,
       title,

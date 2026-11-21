@@ -149,6 +149,8 @@ const handlers = {
   tags: (s) => core.client(s).tags().catch(() => []), // older plugins: fall back to bookmark tags only
   move: (s, m) => core.moveBookmark(s, m),
   update: (s, m) => core.updateBookmark(s, m).finally(markActive),
+  importBookmarks: (s, m) => core.importBookmarks(s, m.items),
+  checkLinks: (s, m) => core.checkLinks(m.urls),
   toggleRead: (s, m) => core.toggleRead(s, m.url, m.file),
   search: (s, m) => core.searchVault(s, m.query),
   readNote: (s, m) => core.readNote(s, m.path),

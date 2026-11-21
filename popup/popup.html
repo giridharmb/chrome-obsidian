@@ -79,8 +79,9 @@
 
       <label class="field">
         <span>Note</span>
-        <textarea id="note" rows="2" placeholder="Why is this worth keeping?"></textarea>
+        <textarea id="note" rows="2" placeholder="Why is this worth keeping?  Type [[ to link a note"></textarea>
       </label>
+      <div id="note-suggest" class="chips small"></div>
 
       <div id="sel-wrap" class="field" hidden>
         <label class="check"><input type="checkbox" id="use-sel" checked> Include highlighted text</label>
@@ -111,7 +112,28 @@
           <option value="all">All</option>
           <option value="unread">Read later</option>
           <option value="done">Done</option>
+          <option value="recent">Recent (last 20)</option>
+          <option value="site">On this site</option>
+          <option value="broken">Broken links</option>
         </select>
+        <select id="sort" title="Order within each section">
+          <option value="note">Note order</option>
+          <option value="new">Newest</option>
+          <option value="old">Oldest</option>
+          <option value="title">Title</option>
+          <option value="domain">Domain</option>
+        </select>
+        <button id="select-mode" title="Select several bookmarks (or ⌘/Ctrl-click, or press x)">Select</button>
+        <button id="check" title="Find links in this view that no longer load">Check links</button>
+      </div>
+      <div id="bulk" class="bulk" hidden>
+        <b id="bulk-n"></b>
+        <select id="bulk-move"></select>
+        <input id="bulk-tag" placeholder="Add tag, Enter" autocomplete="off">
+        <button id="bulk-read" class="small">Mark read</button>
+        <button id="bulk-del" class="small">Delete</button>
+        <button id="bulk-all" class="small">Select all shown</button>
+        <button id="bulk-clear" class="small">Done</button>
       </div>
       <div id="tag-cloud" class="chips small"></div>
       <div id="list" class="list"></div>

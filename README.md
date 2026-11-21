@@ -245,9 +245,9 @@ Press `Alt+Shift+O` or click the toolbar icon.
 </p>
 
 - **Title** — prefilled from the page (`og:title` / `<title>`), editable.
-- **Section** — auto-selected from your rules; click another chip or **+ New** to create one.
-- **Tags** — space- or comma-separated. Suggestions narrow as you type; press **Tab** to accept the first one or click any chip. They come from your bookmarks and, when the plugin supports it, every tag in your vault.
-- **Note** — a one-liner appended after `—`.
+- **Section** — auto-selected from your rules; if no rule matches, it picks the section you've used most for that site. Click another chip or **+ New** to change it.
+- **Tags** — space- or comma-separated. Suggestions narrow as you type; press **Tab** to accept the first one or click any chip. Tags you've used on the same site and the page's own keywords are listed first. They come from your bookmarks and, when the plugin supports it, every tag in your vault.
+- **Note** — a one-liner appended after `—`. Type `[[` and a few letters to link a note from your vault; press **Tab** or click a suggestion.
 - **Include highlighted text** — appears when you had text selected on the page.
 - **Read later** — adds the `- [ ]` checkbox.
 - **Create its own note** — also writes a dedicated note in the clippings folder.
@@ -293,6 +293,12 @@ Header buttons: **▯** open side panel · **↗** open the bookmarks note in Ob
 - Click a tag chip at the top, or a tag on any entry, to filter by it. Click again to clear it.
 - **Drag** a bookmark onto another section (its header or its list) to move it there. Its section tag is updated and any highlight quote moves with it.
 - Hover an entry and click **Edit** to change its title, section, tags or note in the Save tab, then **Update** (or **Cancel**).
+- **Views:** the first dropdown switches between All, Read later, Done, **Recent (last 20)**, **On this site** and **Broken links**.
+- **Sort:** the second dropdown orders each section by note order, newest, oldest, title or domain.
+- **Bulk actions:** click **Select** (or ⌘/Ctrl-click rows, or press `x`), then move, tag, mark read or delete everything selected. **Select all shown** picks the whole current view.
+- **Check links** tests the links in the current view (up to 200 at a time) and lists the ones that return 404/410 or don't answer. It asks for site access the first time, because checking a link means requesting it.
+- **Keyboard:** `/` filter · `↑` `↓` move · `Enter` open · `e` edit · `x` select · `Delete` remove.
+- The list refreshes by itself every 15 seconds while open, so edits made in Obsidian show up without reopening.
 - Tick the checkbox to mark as read — it updates `- [ ]` → `- [x]` in Obsidian.
 - Click a title to open the page. Entries with a dedicated note show **Note** (open in Obsidian) and **View** (preview here) on hover.
 
@@ -385,6 +391,7 @@ Type `ob` in the address bar, press **Tab** (or Space), then type words from a t
 | Close popup after saving | on | |
 | Also log each save in today's daily note | off | REST mode. Appends the entry to the end of today's daily note; needs Obsidian's *Daily notes* core plugin (or Periodic Notes). |
 | One note per section | off | REST mode. New saves go to `<bookmarks folder>/<Section>.md`. The Bookmarks tab, duplicate check and ★ badge read every note in that folder, so entries already in the hub note still show. |
+| Import Chrome bookmarks | — | Button at the bottom of the settings page. Copies your Chrome bookmarks into Obsidian: folders become sections, links already saved are skipped. Asks for bookmark access when you click it. |
 | Export / Import | — | Buttons at the bottom of the settings page. The export file never contains your API key. |
 
 ---
@@ -488,7 +495,8 @@ The extension talks **only to Obsidian on your own machine** (`127.0.0.1` / `loc
 | `sidePanel` | The docked side panel |
 | `favicon` | Show site icons in the bookmarks list (served by Chrome locally) |
 | `http(s)://127.0.0.1/*`, `http(s)://localhost/*` | Reach the Local REST API |
-| `<all_urls>` *(optional, off by default)* | Only requested if you enable *Download images into the vault* |
+| `<all_urls>` *(optional, off by default)* | Only requested if you enable *Download images into the vault* or use *Check links* |
+| `bookmarks` *(optional, off by default)* | Only requested when you click *Import Chrome bookmarks* |
 
 ---
 

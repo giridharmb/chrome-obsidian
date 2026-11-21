@@ -59,3 +59,12 @@ console.log('ALL OK');
   assert.equal(m.takeEntry(d, 'https://x.com'), null);
   console.log('takeEntry OK');
 }
+{
+  const p = m.parseBookmarks('### Dev\n- [T](https://t.com) #x · t.com · 2026-01-01 — see [[Other note]] too\n- [[Clips/C|C]] [↗](https://c.com) — n\n').entries;
+  assert.equal(p[0].title, 'T');
+  assert.equal(p[0].notePath, null);
+  assert.equal(p[0].note, 'see [[Other note]] too');
+  assert.equal(p[1].title, 'C');
+  assert.equal(p[1].notePath, 'Clips/C');
+  console.log('wikilink-in-note OK');
+}

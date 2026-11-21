@@ -36,3 +36,19 @@ await core.moveBookmark(split, { url: 'https://b.com', file: F, section: 'Inbox'
 assert.equal(vault.get('Bookmarks/Dev.md'), '### Dev\n\n- [B](https://b.com) #bookmark/dev\n');
 assert.ok(!vault.get(F).includes('b.com') && vault.get(F).includes('c.com'));
 console.log('move / edit OK');
+
+// Chrome import: folders become sections, saved links and non-web links are skipped, one write per section.
+vault.clear();
+vault.set(F, start);
+const r = await core.importBookmarks(s, [
+  { title: 'New', url: 'https://new.com/?utm_source=x', section: 'Dev', date: '2025-05-05' },
+  { title: 'Dup', url: 'https://a.com/', section: 'Dev' },
+  { title: 'Js', url: 'javascript:void(0)', section: 'Dev' },
+  { title: 'Rec', url: 'https://rec.com', section: 'Recipes' },
+  { title: 'Same twice', url: 'https://rec.com', section: 'Recipes' },
+]);
+assert.deepEqual(r, { added: 2, skipped: 3, sections: 2 });
+assert.ok(vault.get(F).includes('- [New](https://new.com/) #bookmark/dev · new.com · 2025-05-05'));
+assert.ok(vault.get(F).includes('### Recipes\n\n- [Rec](https://rec.com) #bookmark/recipes'));
+assert.equal(vault.get(F).split('a.com').length, start.split('a.com').length);
+console.log('import OK');

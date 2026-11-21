@@ -4,6 +4,7 @@ import { uriSearch } from '../src/lib/obsidian.js';
 import {
   categorize,
   cleanUrl,
+  normTag,
   renderEntry,
   parseTagInput,
   safeFileName,
@@ -102,6 +103,7 @@ function renderCats() {
         textContent: savedIn.has(norm(c)) ? `✓ ${c}` : c,
         title: savedIn.has(norm(c)) ? 'This page is already saved here' : '',
         onclick: () => {
+          catTouched = true;
           category = c;
           renderCats();
           updatePreview();
@@ -115,6 +117,7 @@ function renderCats() {
         const input = el('input', { className: 'chip-input', placeholder: 'Section name' });
         const commit = () => {
           const v = input.value.trim();
+          if (v) catTouched = true;
           if (v) category = v;
           if (v && !S.categories.some((c) => norm(c) === norm(v))) data.sections.push(v);
           renderCats();
@@ -133,6 +136,26 @@ function renderCats() {
       },
     })
   );
+}
+
+/** An entry's own tags, without "#" and without the automatic section tag. */
+function userTags(e) {
+  const prefix = `#${(S.tagPrefix || '').toLowerCase()}/`;
+  return e.tags.filter((t) => !(S.tagPrefix && t.toLowerCase().startsWith(prefix))).map((t) => t.slice(1));
+}
+
+let catTouched = false; // true once the user picks a section by hand
+
+/** Rules first; otherwise the section you most often used for this site. */
+function suggestCategory() {
+  const byRule = categorize(page.url, S);
+  if (byRule !== S.defaultCategory) return byRule;
+  const site = domainOf(page.url || '');
+  const counts = new Map();
+  for (const e of data.entries) {
+    if (site && !e.image && domainOf(e.url) === site && !/^Session \d/.test(e.section)) counts.set(e.section, (counts.get(e.section) || 0) + 1);
+  }
+  return [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || byRule;
 }
 
 let vaultTags = []; // [{ name: '#tag', count }] from the whole vault, when the plugin supports it
@@ -154,10 +177,17 @@ function renderTagSuggestions() {
   const have = new Set(parseTagInput(done));
   const counts = bookmarkTagCounts();
   for (const t of vaultTags) counts.set(t.name, Math.max(counts.get(t.name) || 0, t.count));
+  // Likely tags for this page come first: ones you used on the same site, then the page's own keywords.
+  const site = domainOf(page.url || '');
+  const likely = new Set(data.entries.filter((e) => site && domainOf(e.url) === site).flatMap(userTags).map((t) => `#${t}`));
+  for (const k of (page.keywords || '').split(',').map(normTag).filter(Boolean).slice(0, 5)) {
+    likely.add(k);
+    if (!counts.has(k)) counts.set(k, 0);
+  }
   const starts = (t) => t.toLowerCase().startsWith(`#${partial}`);
   const top = [...counts.entries()]
     .filter(([t]) => !have.has(t) && t.toLowerCase().includes(partial))
-    .sort((a, b) => starts(b[0]) - starts(a[0]) || b[1] - a[1])
+    .sort((a, b) => starts(b[0]) - starts(a[0]) || likely.has(b[0]) - likely.has(a[0]) || b[1] - a[1])
     .map(([t]) => t)
     .slice(0, 12);
   $('tag-suggest').replaceChildren(
@@ -250,6 +280,42 @@ async function doSave(open) {
 
 $('save').onclick = () => doSave(false);
 $('save-open').onclick = () => (editing ? stopEdit() : doSave(true));
+
+// Typing [[ in the Note box suggests notes from the vault; Tab or a click completes the link.
+let noteTimer;
+$('note').addEventListener('input', () => {
+  clearTimeout(noteTimer);
+  const note = $('note');
+  const m = /\[\[([^[\]]*)$/.exec(note.value.slice(0, note.selectionStart));
+  if (!m || S.mode !== 'rest' || m[1].trim().length < 2) return $('note-suggest').replaceChildren();
+  noteTimer = setTimeout(async () => {
+    const q = m[1].trim().toLowerCase();
+    const found = await send('search', { query: q }).catch(() => []);
+    const names = [...new Set(found.map((r) => r.filename.split('/').pop().replace(/\.md$/, '')))];
+    names.sort((a, b) => b.toLowerCase().includes(q) - a.toLowerCase().includes(q));
+    $('note-suggest').replaceChildren(
+      ...names.slice(0, 6).map((n) =>
+        el('button', {
+          className: 'chip',
+          textContent: `[[${n}]]`,
+          onclick: () => {
+            const at = note.selectionStart;
+            note.value = `${note.value.slice(0, at - m[0].length)}[[${n}]] ${note.value.slice(at)}`;
+            $('note-suggest').replaceChildren();
+            note.focus();
+            updatePreview();
+          },
+        })
+      )
+    );
+  }, 250);
+});
+$('note').addEventListener('keydown', (e) => {
+  const first = $('note-suggest').firstElementChild;
+  if (e.key !== 'Tab' || e.shiftKey || !first) return;
+  e.preventDefault();
+  first.click();
+});
 $('save-tabs').onclick = () =>
   send('saveTabs').then((r) => toast(`Saved ${r.count} tabs to ${r.category}`), (e) => toast(e.message, true));
 for (const id of ['title', 'tags', 'note']) $(id).addEventListener('input', updatePreview);
@@ -295,7 +361,8 @@ async function loadPage() {
   $('sel').textContent = page.selection;
   $('note').value = '';
   $('tags').value = '';
-  category = categorize(page.url, S);
+  catTouched = false;
+  category = suggestCategory();
   const savable = /^(https?|file|ftp):/.test(page.url);
   $('save').disabled = $('save-open').disabled = !savable;
   if (!savable) toast("This page can't be bookmarked", true);
@@ -333,13 +400,18 @@ function renderList() {
   renderTagCloud(words);
   const show = $('show').value;
   const list = $('list');
-  const items = data.entries.filter((e) => {
+  const site = domainOf(page.url || '');
+  let items = data.entries.filter((e) => {
     if (show === 'unread' && e.done !== false) return false;
     if (show === 'done' && e.done !== true) return false;
+    if (show === 'site' && domainOf(e.url) !== site) return false;
+    if (show === 'broken' && !broken.has(e.url)) return false;
     if (!f) return true;
     const hay = [e.title, e.url, e.section, e.note, ...e.tags].join(' ').toLowerCase();
     return words.every((w) => hay.includes(w));
   });
+  if (show === 'recent') items = [...items].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 20);
+  shown = items;
   if (!items.length && (f || show !== 'all')) {
     list.replaceChildren(el('div', { className: 'empty', textContent: 'No matches.' }));
     return;
@@ -348,7 +420,9 @@ function renderList() {
   const group = (name) => groups.get(norm(name)) || groups.set(norm(name), [name, []]).get(norm(name));
   // Unfiltered view lists every section, including empty ones.
   if (!f && show === 'all') [...S.categories, ...data.sections].forEach(group);
-  for (const e of items) group(e.section || 'Unsorted')[1].push(e);
+  for (const e of items) group(show === 'recent' ? 'Recent' : e.section || 'Unsorted')[1].push(e);
+  const order = SORTS[$('sort').value];
+  if (order) for (const g of groups.values()) g[1].sort(order);
   const out = [];
   // Large collections: sections start folded, and each shows 50 entries at a time, so the popup stays fast.
   const big = data.entries.length > 200 && !f && show === 'all';
@@ -371,7 +445,7 @@ function renderList() {
     // Drop a dragged bookmark on a section (its header or its list) to move it there.
     for (const zone of [h, g]) {
       zone.ondragover = (ev) => {
-        if (!dragged || norm(dragged.section) === norm(section)) return;
+        if (!dragged || show === 'recent' || norm(dragged.section) === norm(section)) return;
         ev.preventDefault();
         h.classList.add('drop');
       };
@@ -389,7 +463,146 @@ function renderList() {
     out.push(h, g);
   }
   list.replaceChildren(...out);
+  if (focusIdx >= 0) setFocus(focusIdx);
+  renderBulk();
 }
+
+const SORTS = {
+  new: (a, b) => b.date.localeCompare(a.date),
+  old: (a, b) => a.date.localeCompare(b.date),
+  title: (a, b) => a.title.localeCompare(b.title),
+  domain: (a, b) => domainOf(a.url).localeCompare(domainOf(b.url)) || a.title.localeCompare(b.title),
+};
+
+let shown = []; // entries matching the current view (used by "Select all shown" and "Check links")
+let broken = new Map(); // url → why it failed the last link check
+
+/* ----- Selecting several bookmarks and acting on them together ----- */
+
+const selected = new Set();
+let selectMode = false;
+
+function toggleSel(e) {
+  selected.has(e) ? selected.delete(e) : selected.add(e);
+  renderList();
+}
+
+function renderBulk() {
+  $('bulk').hidden = !selectMode && !selected.size;
+  $('select-mode').classList.toggle('on', selectMode);
+  $('bulk-n').textContent = `${selected.size} selected`;
+  const cats = [...S.categories];
+  for (const s of data.sections) if (!cats.some((c) => norm(c) === norm(s))) cats.push(s);
+  $('bulk-move').replaceChildren(new Option('Move to…', ''), ...cats.map((c) => new Option(c, c)));
+}
+
+async function bulk(label, fn) {
+  const items = [...selected];
+  if (!items.length) return toast('Select some bookmarks first', true);
+  let failed = 0;
+  toast(`${label}: working on ${items.length}…`);
+  for (const e of items) await Promise.resolve(fn(e)).catch(() => failed++); // one at a time: each rewrites the note
+  selected.clear();
+  await loadBookmarks();
+  toast(failed ? `${label}: ${failed} of ${items.length} failed` : `${label}: ${items.length} done`, !!failed);
+}
+
+/** The edit-form shape of an existing entry, optionally with one more tag. */
+const asItem = (e, tag) => ({
+  title: e.title,
+  url: e.url,
+  category: e.section,
+  tags: [...new Set([...userTags(e), ...(tag ? [tag] : [])])],
+  note: e.note,
+  readLater: e.done !== null,
+  done: e.done,
+  date: e.date,
+  notePath: e.notePath,
+});
+
+$('select-mode').onclick = () => {
+  selectMode = !selectMode;
+  if (!selectMode) selected.clear();
+  renderList();
+};
+$('bulk-clear').onclick = () => {
+  selectMode = false;
+  selected.clear();
+  renderList();
+};
+$('bulk-all').onclick = () => {
+  shown.forEach((e) => selected.add(e));
+  renderList();
+};
+$('bulk-move').onchange = (ev) => {
+  const to = ev.target.value;
+  if (to) bulk(`Move to ${to}`, (e) => norm(e.section) !== norm(to) && send('move', { url: e.url, file: e.file, section: e.section, to }));
+};
+$('bulk-tag').onkeydown = (ev) => {
+  const tag = normTag(ev.target.value).slice(1);
+  if (ev.key !== 'Enter' || !tag) return;
+  ev.target.value = '';
+  // Image entries are skipped: rewriting their line would drop the embedded picture.
+  bulk(`Tag #${tag}`, (e) => (e.image ? Promise.reject() : send('update', { url: e.url, file: e.file, section: e.section, item: asItem(e, tag) })));
+};
+$('bulk-read').onclick = () => bulk('Mark read', (e) => e.done === false && send('toggleRead', { url: e.url, file: e.file }));
+$('bulk-del').onclick = () =>
+  confirm(`Delete ${selected.size} bookmarks from your notes?`) && bulk('Delete', (e) => send('remove', { url: e.url, file: e.file }));
+
+$('check').onclick = async () => {
+  // Asked for only when you use this button: checking a link means requesting it.
+  if (!(await chrome.permissions.request({ origins: ['<all_urls>'] }))) return toast('Site access is needed to check links', true);
+  const urls = [...new Set(shown.map((e) => e.url))].slice(0, 200);
+  toast(`Checking ${urls.length} links…`);
+  try {
+    const dead = await send('checkLinks', { urls });
+    broken = new Map(dead.map((d) => [d.url, d.reason]));
+    if (dead.length) $('show').value = 'broken';
+    renderList();
+    toast(dead.length ? `${dead.length} of ${urls.length} links are broken` : `All ${urls.length} links load`, !!dead.length);
+  } catch (e) {
+    toast(e.message, true);
+  }
+};
+
+/* ----- Keyboard: / filter · ↑↓ move · Enter open · e edit · x select · Delete remove ----- */
+
+let focusIdx = -1;
+const visibleItems = () => [...document.querySelectorAll('#list .item')].filter((n) => n.offsetParent);
+
+function setFocus(i) {
+  const items = visibleItems();
+  items.forEach((n) => n.classList.remove('focused'));
+  focusIdx = Math.max(-1, Math.min(i, items.length - 1));
+  const n = items[focusIdx];
+  if (n) {
+    n.classList.add('focused');
+    n.scrollIntoView({ block: 'nearest' });
+  }
+}
+
+document.addEventListener('keydown', (ev) => {
+  if ($('tab-browse').hidden || ev.metaKey || ev.ctrlKey || ev.altKey) return;
+  const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(ev.target.tagName);
+  if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') {
+    if (typing && ev.target.id !== 'filter') return;
+    ev.preventDefault();
+    if (typing) ev.target.blur();
+    setFocus(focusIdx + (ev.key === 'ArrowDown' ? 1 : -1));
+    if (focusIdx === -1) $('filter').focus();
+    return;
+  }
+  if (typing) return void (ev.key === 'Escape' && ev.target.blur());
+  if (ev.key === '/') return void (ev.preventDefault(), $('filter').focus());
+  const e = visibleItems()[focusIdx]?.entry;
+  if (!e) return;
+  if (ev.key === 'Enter') openTab(e.url);
+  else if (ev.key === 'e') e.image || startEdit(e);
+  else if (ev.key === 'x' || ev.key === ' ') ev.preventDefault(), toggleSel(e);
+  else if (ev.key === 'Delete' || ev.key === 'Backspace') {
+    confirm(`Delete "${e.title}" from your bookmarks?`) && send('remove', { url: e.url, file: e.file }).then(loadBookmarks, (err) => toast(err.message, true));
+  }
+});
 
 let dragged = null; // bookmark being dragged between sections
 let editing = null; // bookmark loaded into the Save tab for editing
@@ -397,11 +610,10 @@ let editing = null; // bookmark loaded into the Save tab for editing
 function startEdit(e) {
   editing = e;
   page = { url: e.url, title: e.title, selection: '', description: '', image: '' };
-  const prefix = `#${(S.tagPrefix || '').toLowerCase()}/`;
   $('title').value = e.title;
   $('url').textContent = e.url;
   $('fav').src = favicon(e.url);
-  $('tags').value = e.tags.filter((t) => !(S.tagPrefix && t.toLowerCase().startsWith(prefix))).map((t) => t.slice(1)).join(' ');
+  $('tags').value = userTags(e).join(' ');
   $('note').value = e.note;
   $('readlater').checked = e.done !== null;
   $('dedicated').checked = false;
@@ -448,23 +660,26 @@ function renderItem(e) {
   const meta = el('div', { className: 'm' }, `${domainOf(e.url)}${e.date ? ` · ${e.date}` : ''} `);
   for (const t of e.tags) meta.append(el('span', { className: 'tag', textContent: `${t} `, onclick: () => toggleFilter(t) }));
   if (e.note) meta.append(`— ${e.note}`);
+  if (broken.has(e.url)) meta.prepend(el('span', { className: 'bad', textContent: `⚠ ${broken.get(e.url)} · ` }));
   meta.title = meta.textContent;
   const tools = el(
     'div',
     { className: 'tools' },
     e.notePath ? el('button', { textContent: 'Note', title: 'Open its note in Obsidian', onclick: () => send('open', { path: `${e.notePath}.md` }) }) : null,
     e.notePath ? el('button', { textContent: 'View', title: 'Preview note here', onclick: () => viewNote(`${e.notePath}.md`) }) : null,
-    el('button', { textContent: 'Edit', title: 'Edit title, section, tags and note', onclick: () => startEdit(e) }),
+    // Not for image entries: rewriting their line would drop the embedded picture.
+    e.image ? null : el('button', { textContent: 'Edit', title: 'Edit title, section, tags and note', onclick: () => startEdit(e) }),
     el('button', {
       textContent: '✕',
       title: 'Delete this bookmark',
       onclick: () => confirm(`Delete "${e.title}" from your bookmarks?`) && send('remove', { url: e.url, file: e.file }).then(loadBookmarks, (err) => toast(err.message, true)),
     })
   );
-  return el(
+  const row = el(
     'div',
     {
-      className: `item${e.done ? ' done' : ''}${!editing && isCurrent()(e) ? ' current' : ''}`,
+      className: `item${e.done ? ' done' : ''}${!editing && isCurrent()(e) ? ' current' : ''}${selected.has(e) ? ' sel' : ''}`,
+      entry: e,
       draggable: true,
       ondragstart: (ev) => {
         dragged = e;
@@ -477,28 +692,50 @@ function renderItem(e) {
     el('div', { className: 'body' }, el('a', { className: 't', textContent: e.title || e.url, title: e.url, onclick: () => openTab(e.url) }), meta),
     tools
   );
+  // While selecting, a click anywhere on the row selects it instead of opening, ticking or editing.
+  row.addEventListener(
+    'click',
+    (ev) => {
+      if (!selectMode && !ev.metaKey && !ev.ctrlKey) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+      toggleSel(e);
+    },
+    true
+  );
+  return row;
 }
 
 $('filter').addEventListener('input', () => (limits.clear(), renderList()));
 $('show').addEventListener('change', renderList);
+$('sort').addEventListener('change', renderList);
 
-async function loadBookmarks() {
+async function loadBookmarks(quiet = false) {
   if (S.mode !== 'rest' || !S.apiKey) {
     $('list').replaceChildren(el('div', { className: 'empty', textContent: 'Browsing bookmarks needs the Local REST API mode. Use “Open bookmarks note” (↗) instead.' }));
     return;
   }
   try {
-    data = await send('bookmarks');
+    const next = await send('bookmarks');
+    if (quiet && JSON.stringify(next) === JSON.stringify(data)) return; // nothing changed in Obsidian
+    data = next;
     $('count').textContent = data.entries.length || '';
   } catch (e) {
-    $('list').replaceChildren(el('div', { className: 'empty', textContent: e.message }));
+    if (!quiet) $('list').replaceChildren(el('div', { className: 'empty', textContent: e.message }));
     return;
   }
+  selected.clear(); // they point at the old list
+  if (!editing && !catTouched && page.url) category = suggestCategory();
   renderList();
   renderCats();
   renderTagSuggestions();
   showDuplicate();
 }
+
+// Pick up edits made in Obsidian while the popup or side panel stays open.
+setInterval(() => {
+  if (S && !editing && !selected.size && !dragged && document.visibilityState === 'visible') loadBookmarks(true);
+}, 15000);
 
 /* ---------------- Search tab ---------------- */
 

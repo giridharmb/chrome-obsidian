@@ -307,6 +307,49 @@ export function updateBookmark(s, { url, file, section, item }) {
   return moveBookmark(s, { url, file, section, to, line });
 }
 
+/** Adds many bookmarks at once (Chrome import): one write per section; links already saved are skipped. */
+export async function importBookmarks(s, items) {
+  const have = new Set((await getBookmarks(s)).entries.map((e) => canonUrl(e.url)));
+  const bySection = new Map();
+  let added = 0;
+  for (const it of items) {
+    if (!/^https?:/.test(it.url || '') || have.has(canonUrl(it.url))) continue;
+    have.add(canonUrl(it.url));
+    const section = resolveCategory(it.section || s.defaultCategory, s.categories);
+    if (!bySection.has(section)) bySection.set(section, []);
+    bySection.get(section).push(renderEntry(s, { title: it.title || it.url, url: cleanUrl(it.url), category: section, tags: [], readLater: false, date: it.date }));
+    added++;
+  }
+  for (const [section, blocks] of bySection) await appendToBookmarks(s, section, blocks.join('\n'));
+  return { added, skipped: items.length - added, sections: bySection.size };
+}
+
+/**
+ * Which of these links no longer load: [{ url, reason }]. Only a 404/410 or no answer at all counts;
+ * sites that merely refuse automated requests (401/403/429/5xx) are left alone.
+ * shortcut: runs inside one message, so the caller caps the list; move to a background job if you need thousands.
+ */
+export async function checkLinks(urls) {
+  const dead = [];
+  const queue = [...urls];
+  const probe = async (url) => {
+    for (const method of ['HEAD', 'GET']) {
+      try {
+        const r = await fetch(url, { method, redirect: 'follow', signal: AbortSignal.timeout(6000) });
+        r.body?.cancel();
+        if (r.ok) return;
+        if (method === 'GET' && (r.status === 404 || r.status === 410)) return dead.push({ url, reason: String(r.status) });
+      } catch {
+        if (method === 'GET') dead.push({ url, reason: 'no answer' });
+      }
+    }
+  };
+  await Promise.all(Array.from({ length: 12 }, async () => {
+    while (queue.length) await probe(queue.shift());
+  }));
+  return dead;
+}
+
 export async function searchVault(s, query) {
   requireRest(s);
   const results = await client(s).search(query);

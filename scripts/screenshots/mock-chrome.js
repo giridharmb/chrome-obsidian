@@ -75,6 +75,8 @@ const handlers = {
   status: () => ({ ok: true, message: 'Connected · Obsidian Local REST API 5.4.0' }),
   bookmarks: () => parseBookmarks(doc),
   search: () => SEARCH,
+  checkLinks: (m) => [{ url: m.urls[1], reason: '404' }],
+  tags: () => [],
   readNote: () => NOTE,
   save: (m) => ({ category: m.item.category }),
 };

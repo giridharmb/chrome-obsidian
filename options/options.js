@@ -1,5 +1,5 @@
 import { getSettings, saveSettings, resetSettings, DEFAULTS } from '../src/lib/settings.js';
-import { renderEntry } from '../src/lib/markdown.js';
+import { renderEntry, fmtDate } from '../src/lib/markdown.js';
 
 const $ = (id) => document.getElementById(id);
 const TEXT = ['apiUrl', 'apiKey', 'vaultName', 'bookmarksFile', 'clippingsFolder', 'attachmentsFolder', 'tagPrefix', 'entryTemplate', 'domainRules', 'theme'];
@@ -121,6 +121,25 @@ $('import-file').onchange = async (e) => {
     flash('saved', 'That file is not a valid settings export.', false);
   }
   e.target.value = '';
+};
+
+$('import-chrome').onclick = async () => {
+  // Asked for only when you use this button.
+  if (!(await chrome.permissions.request({ permissions: ['bookmarks'] }))) return flash('saved', 'Chrome bookmark access was not granted.', false);
+  const items = [];
+  // Depth 0 is the invisible root, depth 1 the bookmarks bar / "Other bookmarks"; real folders start at depth 2.
+  const walk = (n, folder, depth) => {
+    if (n.url) items.push({ title: n.title, url: n.url, section: folder, date: n.dateAdded ? fmtDate(new Date(n.dateAdded)) : undefined });
+    (n.children || []).forEach((c) => walk(c, depth >= 2 && n.title ? n.title : 'Imported', depth + 1));
+  };
+  (await chrome.bookmarks.getTree()).forEach((r) => walk(r, 'Imported', 0));
+  if (!items.length) return flash('saved', 'No Chrome bookmarks found.', false);
+  if (!confirm(`Import ${items.length} Chrome bookmarks into Obsidian?\n\nFolders become sections. Links already saved are skipped.`)) return;
+  await saveSettings(readForm());
+  flash('saved', 'Importing…', true);
+  const r = await chrome.runtime.sendMessage({ type: 'importBookmarks', items });
+  if (!r?.ok) return flash('saved', r?.error || 'Import failed', false);
+  flash('saved', `Imported ${r.data.added} into ${r.data.sections} sections (${r.data.skipped} skipped)`, true);
 };
 
 $('test').onclick = async () => {

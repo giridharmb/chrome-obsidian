@@ -12,6 +12,7 @@ function collectPageInfo() {
   return {
     title: meta('og:title') || document.title || '',
     url: location.href,
+    keywords: meta('keywords') || meta('news_keywords'),
     description: meta('og:description') || meta('description') || meta('twitter:description'),
     image: abs(meta('og:image') || meta('twitter:image')),
     siteName: meta('og:site_name'),
@@ -20,7 +21,7 @@ function collectPageInfo() {
 }
 
 export async function getPageInfo(tab) {
-  const base = { title: tab.title || tab.url || '', url: tab.url || '', description: '', image: '', siteName: '', selection: '' };
+  const base = { title: tab.title || tab.url || '', url: tab.url || '', description: '', image: '', siteName: '', selection: '', keywords: '' };
   try {
     const [res] = await chrome.scripting.executeScript({ target: { tabId: tab.id }, func: collectPageInfo });
     const info = res?.result || {};

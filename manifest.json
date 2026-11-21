@@ -44,6 +44,7 @@
     "https://localhost/*"
   ],
   "optional_host_permissions": ["<all_urls>"],
+  "optional_permissions": ["bookmarks"],
   "commands": {
     "_execute_action": {
       "suggested_key": { "default": "Alt+Shift+O" },
