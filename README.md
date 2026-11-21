@@ -309,7 +309,7 @@ Click **▯** in the popup header (or right-click the toolbar icon → *Open Obs
 
 ### Themes
 
-Pick a theme in **Settings → Entry format → Theme**. The default follows your system's light/dark setting; you can also force **Light** or **Dark**, or choose one of six colour themes. The settings page previews the theme as soon as you select it.
+Pick a theme from the dropdown in the popup's header (it applies and saves immediately), or in **Settings → Entry format → Theme**. The default follows your system's light/dark setting; you can also force **Light** or **Dark**, or choose one of six colour themes. The settings page previews the theme as soon as you select it.
 
 | Nord | Dracula | Solarized Light |
 |---|---|---|

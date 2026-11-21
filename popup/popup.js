@@ -1,4 +1,4 @@
-import { getSettings } from '../src/lib/settings.js';
+import { getSettings, saveSettings } from '../src/lib/settings.js';
 import { getPageInfo, getActiveTab } from '../src/lib/page.js';
 import { uriSearch } from '../src/lib/obsidian.js';
 import {
@@ -67,6 +67,10 @@ document.querySelectorAll('.tabs button').forEach((b) =>
   })
 );
 
+$('theme').onchange = (e) => {
+  document.documentElement.dataset.theme = S.theme = e.target.value;
+  saveSettings({ theme: S.theme });
+};
 $('btn-options').onclick = () => chrome.runtime.openOptionsPage();
 $('btn-open').onclick = () => send('open').catch((e) => toast(e.message, true));
 // sidePanel.open() must run synchronously inside the click gesture, so resolve the window id up front.
@@ -551,7 +555,7 @@ async function checkStatus() {
 
 async function init() {
   S = await getSettings();
-  document.documentElement.dataset.theme = S.theme;
+  document.documentElement.dataset.theme = $('theme').value = S.theme;
   $('readlater').checked = S.readLater;
   $('dedicated').disabled = S.mode !== 'rest';
   if (S.mode !== 'rest') $('dedicated').parentElement.title = 'Requires Local REST API mode';
