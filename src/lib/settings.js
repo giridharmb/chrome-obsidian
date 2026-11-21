@@ -52,6 +52,7 @@ export const DEFAULTS = {
   linkDate: false,
   downloadImages: false,
   closeAfterSave: true,
+  theme: 'system', // or light, dark, nord, dracula, solarized-light, solarized-dark, gruvbox, rose-pine
   dailyNote: false, // also append each save to today's daily note (REST mode)
   splitBySection: false, // one note per section next to the bookmarks note (REST mode)
   entryTemplate: '- {{checkbox}}{{link}} {{tags}} · {{domain}} · {{date}}{{note}}',

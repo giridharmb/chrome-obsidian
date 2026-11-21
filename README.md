@@ -307,6 +307,18 @@ Searches **all notes in your vault** (not just bookmarks) via the REST API, as y
 
 Click **▯** in the popup header (or right-click the toolbar icon → *Open Obsidian side panel*). The panel stays open while you browse and updates to whichever tab is active.
 
+### Themes
+
+Pick a theme in **Settings → Entry format → Theme**. The default follows your system's light/dark setting; you can also force **Light** or **Dark**, or choose one of six colour themes. The settings page previews the theme as soon as you select it.
+
+| Nord | Dracula | Solarized Light |
+|---|---|---|
+| <img src="docs/images/theme-nord.png" width="260" alt="Nord"> | <img src="docs/images/theme-dracula.png" width="260" alt="Dracula"> | <img src="docs/images/theme-solarized-light.png" width="260" alt="Solarized Light"> |
+
+| Solarized Dark | Gruvbox | Rosé Pine |
+|---|---|---|
+| <img src="docs/images/theme-solarized-dark.png" width="260" alt="Solarized Dark"> | <img src="docs/images/theme-gruvbox.png" width="260" alt="Gruvbox"> | <img src="docs/images/theme-rose-pine.png" width="260" alt="Rosé Pine"> |
+
 ### Keyboard shortcuts
 
 | Shortcut | Action |
@@ -352,6 +364,7 @@ Type `ob` in the address bar, press **Tab** (or Space), then type words from a t
 | Newest first | on | Insert at the top of the section instead of the bottom |
 | Link dates to daily notes | off | Writes `[[2026-10-09]]` instead of `2026-10-09` |
 | Download images into the vault | off | Asks Chrome for site access when enabled; falls back to remote URL if a download fails |
+| Theme | Default (system) | Light, Dark, Nord, Dracula, Solarized Light, Solarized Dark, Gruvbox, Rosé Pine |
 | Close popup after saving | on | |
 | Also log each save in today's daily note | off | REST mode. Appends the entry to the end of today's daily note; needs Obsidian's *Daily notes* core plugin (or Periodic Notes). |
 | One note per section | off | REST mode. New saves go to `<bookmarks folder>/<Section>.md`. The Bookmarks tab, duplicate check and ★ badge read every note in that folder, so entries already in the hub note still show. |

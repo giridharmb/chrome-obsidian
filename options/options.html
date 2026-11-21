@@ -62,6 +62,19 @@
       <label class="field"><span>Template</span><input id="entryTemplate" spellcheck="false"></label>
       <p class="hint">Placeholders: <code>{{checkbox}}</code> <code>{{link}}</code> <code>{{title}}</code> <code>{{url}}</code> <code>{{domain}}</code> <code>{{date}}</code> <code>{{time}}</code> <code>{{tags}}</code> <code>{{note}}</code> <code>{{category}}</code></p>
       <pre id="tpl-preview" class="tpl-preview"></pre>
+      <label class="field"><span>Theme</span>
+        <select id="theme">
+          <option value="system">Default (follows system light/dark)</option>
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+          <option value="nord">Nord</option>
+          <option value="dracula">Dracula</option>
+          <option value="solarized-light">Solarized Light</option>
+          <option value="solarized-dark">Solarized Dark</option>
+          <option value="gruvbox">Gruvbox</option>
+          <option value="rose-pine">Rosé Pine</option>
+        </select>
+      </label>
       <div class="checks">
         <label class="check"><input type="checkbox" id="addCategoryTag"> Add section tag (<code>#bookmark/dev</code>)</label>
         <label class="check"><input type="checkbox" id="readLater"> “Read later” checkbox on by default</label>

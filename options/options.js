@@ -2,7 +2,7 @@ import { getSettings, saveSettings, resetSettings, DEFAULTS } from '../src/lib/s
 import { renderEntry } from '../src/lib/markdown.js';
 
 const $ = (id) => document.getElementById(id);
-const TEXT = ['apiUrl', 'apiKey', 'vaultName', 'bookmarksFile', 'clippingsFolder', 'attachmentsFolder', 'tagPrefix', 'entryTemplate', 'domainRules'];
+const TEXT = ['apiUrl', 'apiKey', 'vaultName', 'bookmarksFile', 'clippingsFolder', 'attachmentsFolder', 'tagPrefix', 'entryTemplate', 'domainRules', 'theme'];
 const BOOL = ['addCategoryTag', 'readLater', 'newestFirst', 'linkDate', 'downloadImages', 'closeAfterSave', 'dailyNote', 'splitBySection'];
 
 const lines = (v) => v.split('\n').map((l) => l.trim()).filter(Boolean);
@@ -51,6 +51,7 @@ function updateModeUI() {
 async function load() {
   const s = await getSettings();
   for (const k of TEXT) $(k).value = s[k];
+  document.documentElement.dataset.theme = s.theme;
   for (const k of BOOL) $(k).checked = !!s[k];
   document.querySelector(`input[name=mode][value="${s.mode}"]`).checked = true;
   $('categories').value = s.categories.join('\n');
@@ -66,6 +67,7 @@ function flash(id, msg, ok) {
 }
 
 $('categories').addEventListener('input', syncCategorySelects);
+$('theme').addEventListener('change', (e) => (document.documentElement.dataset.theme = e.target.value)); // live preview
 document.querySelectorAll('input, textarea, select').forEach((n) => n.addEventListener('input', preview));
 document.querySelectorAll('input[name=mode]').forEach((n) => n.addEventListener('change', updateModeUI));
 

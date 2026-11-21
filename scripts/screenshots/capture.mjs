@@ -23,14 +23,20 @@ const CHROME =
       : 'google-chrome');
 
 const SCENES = [
-  { name: 'popup-save', page: 'popup', q: 'scene=save&tall=1', size: [680, 880] },
-  { name: 'popup-save-dark', page: 'popup', q: 'scene=save&tall=1', size: [680, 880], dark: true },
-  { name: 'popup-duplicate', page: 'popup', q: `scene=dupe&sel=&title=coddingtonbear/obsidian-local-rest-api&url=${encodeURIComponent('https://github.com/coddingtonbear/obsidian-local-rest-api')}`, size: [680, 420] },
-  { name: 'popup-bookmarks', page: 'popup', q: 'scene=browse', size: [680, 600] },
-  { name: 'popup-unread', page: 'popup', q: 'scene=unread', size: [680, 480] },
-  { name: 'popup-search', page: 'popup', q: 'scene=search', size: [680, 380] },
-  { name: 'popup-note', page: 'popup', q: 'scene=note', size: [680, 600] },
+  { name: 'popup-save', page: 'popup', q: 'scene=save&tall=1', size: [800, 880] },
+  { name: 'popup-save-dark', page: 'popup', q: 'scene=save&tall=1', size: [800, 880], dark: true },
+  { name: 'popup-duplicate', page: 'popup', q: `scene=dupe&sel=&title=coddingtonbear/obsidian-local-rest-api&url=${encodeURIComponent('https://github.com/coddingtonbear/obsidian-local-rest-api')}`, size: [800, 420] },
+  { name: 'popup-bookmarks', page: 'popup', q: 'scene=browse', size: [800, 600] },
+  { name: 'popup-unread', page: 'popup', q: 'scene=unread', size: [800, 480] },
+  { name: 'popup-search', page: 'popup', q: 'scene=search', size: [800, 380] },
+  { name: 'popup-note', page: 'popup', q: 'scene=note', size: [800, 600] },
   { name: 'side-panel', page: 'popup', q: 'scene=browse&panel=1', size: [460, 700] },
+  { name: 'theme-nord', page: 'popup', q: 'scene=browse&theme=nord', size: [800, 600] },
+  { name: 'theme-dracula', page: 'popup', q: 'scene=browse&theme=dracula', size: [800, 600] },
+  { name: 'theme-solarized-light', page: 'popup', q: 'scene=browse&theme=solarized-light', size: [800, 600] },
+  { name: 'theme-solarized-dark', page: 'popup', q: 'scene=browse&theme=solarized-dark', size: [800, 600] },
+  { name: 'theme-gruvbox', page: 'popup', q: 'scene=browse&theme=gruvbox', size: [800, 600] },
+  { name: 'theme-rose-pine', page: 'popup', q: 'scene=browse&theme=rose-pine', size: [800, 600] },
   { name: 'options', page: 'options', q: '', size: [900, 1660] },
 ];
 

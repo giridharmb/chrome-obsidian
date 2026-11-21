@@ -4,7 +4,7 @@ import { parseBookmarks, newBookmarksFile, insertUnderHeading, renderEntry } fro
 import { DEFAULTS } from '/src/lib/settings.js';
 
 const params = new URLSearchParams(location.search);
-const settings = { ...DEFAULTS, apiKey: 'demo-key', vaultName: 'My Vault', apiUrl: 'https://127.0.0.1:27124' };
+const settings = { ...DEFAULTS, apiKey: 'demo-key', vaultName: 'My Vault', apiUrl: 'https://127.0.0.1:27124', theme: params.get('theme') || 'system' };
 
 const samples = [
   ['Dev', 'coddingtonbear/obsidian-local-rest-api', 'https://github.com/coddingtonbear/obsidian-local-rest-api', ['obsidian', 'api'], 'powers this extension', true],

@@ -551,6 +551,7 @@ async function checkStatus() {
 
 async function init() {
   S = await getSettings();
+  document.documentElement.dataset.theme = S.theme;
   $('readlater').checked = S.readLater;
   $('dedicated').disabled = S.mode !== 'rest';
   if (S.mode !== 'rest') $('dedicated').parentElement.title = 'Requires Local REST API mode';
